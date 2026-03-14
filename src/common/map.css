@@ -1,0 +1,43 @@
+.j26-marker {
+	position: relative;
+}
+
+.j26-marker.j26-marker--pink {
+	--pin-fill: #f5b3bd;
+	--pin-stroke: #da9fa8;
+	color: var(--color-text-base);
+}
+
+.j26-marker.j26-marker--blue {
+	--pin-fill: #8dacc6;
+	--pin-stroke: #5f819e;
+	color: var(--color-text-base);
+}
+
+.j26-marker__container {
+	position: absolute;
+	bottom: 0%;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 100%;
+}
+
+.j26-marker__container > svg {
+	width: 100%;
+	height: auto;
+	filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.j26-marker__icon {
+	position: absolute;
+	top: 0;
+	left: 0;
+	aspect-ratio: 1 / 1;
+	width: 100%;
+	padding: 6px;
+}
+
+.j26-marker__icon > svg {
+	width: 100%;
+	height: 100%;
+}
