@@ -1,6 +1,7 @@
 import { Marker, type PointTuple, TileLayer } from "leaflet";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import { BaseLayers } from "../common/BaseLayers";
 import { MapCanvas, useMap } from "../common/MapCanvas";
 import { createMarkerIcon } from "../common/marker";
 import "../style.css";
@@ -96,6 +97,7 @@ function PreviewApp() {
 			class={`w-screen h-dvh transition-opacity ${tilesLoaded ? "" : "opacity-0"}`}
 		>
 			<MapCanvas interactive={false} fadeAnimation={false} center={center}>
+				<BaseLayers />
 				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />
 			</MapCanvas>
