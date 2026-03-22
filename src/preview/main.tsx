@@ -52,7 +52,7 @@ function PreviewPin({ position, iconUrl }: Props) {
 	useEffect(() => {
 		if (!map) return;
 		const marker = new Marker(position, {
-			icon: createMarkerIcon("blue", iconUrl),
+			icon: createMarkerIcon("#059669", iconUrl),
 			interactive: false,
 		}).addTo(map);
 		return () => {

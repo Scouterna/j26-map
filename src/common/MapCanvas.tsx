@@ -3,7 +3,6 @@ import type { ComponentChildren } from "preact";
 import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import "leaflet/dist/leaflet.css";
-import "./map.css";
 
 const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
