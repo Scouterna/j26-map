@@ -1,6 +1,6 @@
-import { Marker, type PointTuple } from "leaflet";
+import { Marker, type PointTuple, TileLayer } from "leaflet";
 import { render } from "preact";
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { MapCanvas, useMap } from "../common/MapCanvas";
 import { createMarkerIcon } from "../common/marker";
 import "../style.css";
@@ -10,6 +10,41 @@ export type Props = {
 	position: PointTuple;
 	iconUrl?: string;
 };
+
+function TileLoadWatcher({ onLoaded }: { onLoaded: () => void }) {
+	const map = useMap();
+
+	useEffect(() => {
+		if (!map) return;
+
+		let tileLayer: TileLayer | undefined;
+		map.eachLayer((layer) => {
+			if (layer instanceof TileLayer) tileLayer = layer;
+		});
+		if (!tileLayer) return;
+
+		// Capture as const so TypeScript can narrow it correctly
+		const tl = tileLayer as TileLayer & { _loading: boolean };
+
+		let raf: ReturnType<typeof requestAnimationFrame>;
+		const reveal = () => {
+			raf = requestAnimationFrame(onLoaded);
+		};
+
+		if (!tl._loading) {
+			reveal();
+		} else {
+			tl.on("load", reveal);
+		}
+
+		return () => {
+			tl.off("load", reveal);
+			cancelAnimationFrame(raf);
+		};
+	}, [map, onLoaded]);
+
+	return null;
+}
 
 function PreviewPin({ position, iconUrl }: Props) {
 	const map = useMap();
@@ -53,9 +88,15 @@ function PreviewApp() {
 	// Shift center slightly north so the pin isn't hidden behind the top edge
 	const center: PointTuple = [lat + 0.00025, lng];
 
+	const [tilesLoaded, setTilesLoaded] = useState(false);
+	const onLoaded = useCallback(() => setTilesLoaded(true), []);
+
 	return (
-		<div class="w-screen h-dvh">
-			<MapCanvas interactive={false} center={center}>
+		<div
+			class={`w-screen h-dvh transition-opacity ${tilesLoaded ? "" : "opacity-0"}`}
+		>
+			<MapCanvas interactive={false} fadeAnimation={false} center={center}>
+				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />
 			</MapCanvas>
 		</div>

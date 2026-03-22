@@ -1,4 +1,4 @@
-import { control, Map as LMap, TileLayer, type PointTuple } from "leaflet";
+import { control, Map as LMap, type PointTuple, TileLayer } from "leaflet";
 import type { ComponentChildren } from "preact";
 import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
@@ -18,6 +18,7 @@ type Props = {
 	class?: string;
 	children?: ComponentChildren;
 	interactive?: boolean;
+	fadeAnimation?: boolean;
 	center?: PointTuple;
 	zoom?: number;
 };
@@ -26,6 +27,7 @@ export function MapCanvas({
 	class: className,
 	children,
 	interactive = true,
+	fadeAnimation = true,
 	center = DEFAULT_CENTER,
 	zoom = DEFAULT_ZOOM,
 }: Props) {
@@ -35,7 +37,10 @@ export function MapCanvas({
 	useEffect(() => {
 		if (!containerRef.current) return;
 
-		const m = new LMap(containerRef.current, { zoomControl: false });
+		const m = new LMap(containerRef.current, {
+			zoomControl: false,
+			fadeAnimation,
+		});
 
 		new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 			maxZoom: 20,
@@ -70,7 +75,7 @@ export function MapCanvas({
 	return (
 		<MapContext.Provider value={map}>
 			<div ref={containerRef} class={`w-full h-full ${className ?? ""}`} />
-			{map && children}
+			{children}
 		</MapContext.Provider>
 	);
 }
