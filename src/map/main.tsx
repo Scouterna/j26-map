@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { BaseLayers } from "../common/BaseLayers";
+import { LocationsLayer } from "../common/layers/LocationsLayer";
 import { MapCanvas } from "../common/MapCanvas";
 import "../style.css";
 
@@ -8,6 +9,7 @@ function MapApp() {
 		<div class="w-screen h-dvh">
 			<MapCanvas>
 				<BaseLayers />
+				<LocationsLayer />
 			</MapCanvas>
 		</div>
 	);
