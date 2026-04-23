@@ -1,8 +1,9 @@
-import { control, Map as LMap, type PointTuple, TileLayer } from "leaflet";
+import { control, Map as LMap, type PointTuple, svg, TileLayer } from "leaflet";
 import type { ComponentChildren } from "preact";
 import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import "leaflet/dist/leaflet.css";
+import "leaflet-edgebuffer";
 
 const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
@@ -39,6 +40,7 @@ export function MapCanvas({
 		const m = new LMap(containerRef.current, {
 			zoomControl: false,
 			fadeAnimation,
+			renderer: svg({ padding: 1 }),
 		});
 
 		new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -46,6 +48,7 @@ export function MapCanvas({
 			minZoom: 12,
 			attribution:
 				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+			edgeBufferTiles: 1,
 		}).addTo(m);
 
 		if (interactive) {

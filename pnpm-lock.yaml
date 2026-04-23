@@ -29,6 +29,9 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
+      leaflet-edgebuffer:
+        specifier: ^1.0.7
+        version: 1.0.7
       leaflet.markercluster:
         specifier: ^1.5.3
         version: 1.5.3(leaflet@1.9.4)
@@ -960,6 +963,9 @@ packages:
 
   kolorist@1.8.0:
     resolution: {integrity: sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ==}
+
+  leaflet-edgebuffer@1.0.7:
+    resolution: {integrity: sha512-ayapUPbKJPTCNr50xYtYGJRfXTLIqs60goyHxCV3XREMqV4Ima8R3GUCKU/UIxzLPc+Be8U6yuxKqkBFoHE0Rw==}
 
   leaflet.markercluster@1.5.3:
     resolution: {integrity: sha512-vPTw/Bndq7eQHjLBVlWpnGeLa3t+3zGiuM7fJwCkiMFq+nmRuG3RI3f7f4N4TDX7T4NpbAXpR2+NTRSEGfCSeA==}
@@ -2056,6 +2062,8 @@ snapshots:
   json5@2.2.3: {}
 
   kolorist@1.8.0: {}
+
+  leaflet-edgebuffer@1.0.7: {}
 
   leaflet.markercluster@1.5.3(leaflet@1.9.4):
     dependencies:
