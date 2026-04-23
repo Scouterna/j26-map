@@ -11,6 +11,8 @@ import type { Category, Location } from "../locationTypes";
 import { useMap } from "../MapCanvas";
 import { createMarkerIcon } from "../marker";
 
+const MARKER_SIZE = 28;
+
 function createClusterIcon(categories: Category[]) {
 	const unique = [...new Set(categories.map((c) => c.color))];
 	const color = unique.length === 1 ? unique[0] : "#334155";
@@ -18,12 +20,12 @@ function createClusterIcon(categories: Category[]) {
 
 	const html = renderToStaticMarkup(
 		<div
-			className="size-10 rounded-full border-[3px] border-white shadow-md flex items-center justify-center text-white text-sm font-bold"
+			className="size-7 rounded-full border border-white shadow-xs flex items-center justify-center text-white text-sm font-bold"
 			style={{ backgroundColor: color }}
 		>
 			{icon ? (
 				<div
-					className="absolute inset-0 p-2 bg-white mask-no-repeat mask-contain mask-center mask-origin-content"
+					className="absolute inset-0 p-1.5 bg-white mask-no-repeat mask-contain mask-center mask-origin-content"
 					style={{
 						maskImage: `url('${getIconURL(icon.iconName, icon.iconVariant)}')`,
 					}}
@@ -37,8 +39,8 @@ function createClusterIcon(categories: Category[]) {
 	return new DivIcon({
 		className: "j26-marker",
 		html,
-		iconSize: [40, 40],
-		iconAnchor: [20, 20],
+		iconSize: [MARKER_SIZE, MARKER_SIZE],
+		iconAnchor: [MARKER_SIZE / 2, MARKER_SIZE / 2],
 	});
 }
 
@@ -72,14 +74,15 @@ export function LocationsLayer() {
 			},
 		});
 
-		const markers = locations.map((loc) =>
-			new Marker(loc.position, {
-				icon: createMarkerIcon(
-					loc.category.color,
-					getIconURL(loc.category.iconName, loc.category.iconVariant),
-				),
-				...({ category: loc.category } as object),
-			})
+		const markers = locations.map(
+			(loc) =>
+				new Marker(loc.position, {
+					icon: createMarkerIcon(
+						loc.category.color,
+						getIconURL(loc.category.iconName, loc.category.iconVariant),
+					),
+					...({ category: loc.category } as object),
+				}),
 		);
 
 		function updateVisibility() {

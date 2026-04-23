@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="19.6mm"
+   height="23.337mm"
+   viewBox="0 0 19.6 23.337"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="xpin.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#cdebb0"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="6.2908565"
+     inkscape:cx="72.168233"
+     inkscape:cy="28.533476"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="1912"
+     inkscape:window-y="352"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <filter
+       style="color-interpolation-filters:sRGB"
+       id="filter17"
+       x="-0.06122449"
+       y="-0.051420491"
+       width="1.122449"
+       height="1.1242662">
+      <feFlood
+         result="flood"
+         in="SourceGraphic"
+         flood-opacity="0.603922"
+         flood-color="rgb(0,0,0)"
+         id="feFlood16" />
+      <feGaussianBlur
+         result="blur"
+         in="SourceGraphic"
+         stdDeviation="0.500000"
+         id="feGaussianBlur16" />
+      <feOffset
+         result="offset"
+         in="blur"
+         dx="0.000000"
+         dy="0.500000"
+         id="feOffset16" />
+      <feComposite
+         result="comp1"
+         operator="in"
+         in="flood"
+         in2="offset"
+         id="feComposite16" />
+      <feComposite
+         result="comp2"
+         operator="over"
+         in="SourceGraphic"
+         in2="comp1"
+         id="feComposite17" />
+    </filter>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-100,-25)">
+    <path
+       id="path1"
+       style="fill:#ffffff;stroke-width:0.835636;filter:url(#filter17)"
+       d="M 109.79992,25 C 104.36972,25.106908 100,29.538953 100,34.994738 c 0,2.761424 1.18741,5.227888 2.69802,7.359758 3.16078,4.460705 5.6467,5.982504 7.1019,5.982504 1.4552,0 3.94111,-1.521799 7.10189,-5.982504 1.51061,-2.13187 2.69819,-4.598334 2.69819,-7.359758 0,-5.455785 -4.36988,-9.88783 -9.80008,-9.994738 z"
+       sodipodi:nodetypes="cscsssc" />
+    <circle
+       style="fill:#366fb0;fill-opacity:1;stroke-width:1.27853;-inkscape-stroke:none"
+       id="path17"
+       cx="109.79992"
+       cy="34.799999"
+       r="9" />
+  </g>
+</svg>
