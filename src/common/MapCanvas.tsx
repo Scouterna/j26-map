@@ -55,7 +55,7 @@ export function MapCanvas({
 			minZoom: 10,
 			attribution:
 				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-			edgeBufferTiles: 1,
+			// edgeBufferTiles: 1,
 		}).addTo(m);
 
 		if (interactive) {
