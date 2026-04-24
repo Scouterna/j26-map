@@ -1,4 +1,4 @@
-import { Canvas, SVG, type PathOptions, geoJSON } from "leaflet";
+import { Canvas, SVG, geoJSON, type PathOptions } from "leaflet";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -46,7 +46,7 @@ type Props = {
 	/** SVG <pattern> element string; injected into a hidden body-level SVG so url(#id) resolves across all renderers */
 	patternDef?: string;
 	/** Leaflet pane name; controls z-ordering relative to other layers */
-	pane?: string;
+	pane: string;
 	/** Feature property to use as stroke color */
 	colorAttribute?: string;
 	/** Feature property to use as fillColor */
@@ -86,8 +86,8 @@ export function GeoJsonLayer({
 			return {
 				...style,
 				weight: (baseWeight * widthMultiplier + weightOffset) * scale,
-				...(colorAttribute && props[colorAttribute] && { color: props[colorAttribute] as string }),
-				...(fillColorAttribute && props[fillColorAttribute] && { fillColor: props[fillColorAttribute] as string }),
+				...(colorAttribute && props[colorAttribute] ? { color: props[colorAttribute] as string } : {}),
+				...(fillColorAttribute && props[fillColorAttribute] ? { fillColor: props[fillColorAttribute] as string } : {}),
 			};
 		}
 

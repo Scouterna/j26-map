@@ -8,6 +8,9 @@ export function BaseLayers() {
 			<MapPane name="baseFill" zIndex={300} />
 			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} />
 			<MapPane name="districtsBorder" zIndex={410} showAtZoom={18} />
+			<MapPane name="roadsOutline" zIndex={420} />
+			<MapPane name="roadsFill" zIndex={421} />
+			<MapPane name="tents" zIndex={430} />
 			<AreaLabelsLayer />
 			<GeoJsonLayer
 				src="./layers/outline.geojson"
@@ -45,18 +48,20 @@ export function BaseLayers() {
 				svgPadding={0.5}
 				pane="districtsBorder"
 			/>
-			<GeoJsonLayer // Roads gray outline
+			<GeoJsonLayer
 				src="./layers/roads.geojson"
 				style={{ color: "#b3b3b3", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
 				weightOffset={2}
+				pane="roadsOutline"
 			/>
-			<GeoJsonLayer // Roads white fill
+			<GeoJsonLayer
 				src="./layers/roads.geojson"
 				style={{ color: "#ffffff", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
+				pane="roadsFill"
 			/>
 			<GeoJsonLayer
 				src="./layers/tents.geojson"
@@ -67,6 +72,7 @@ export function BaseLayers() {
 					fillOpacity: 1,
 				}}
 				useCanvas
+				pane="tents"
 			/>
 		</>
 	);
