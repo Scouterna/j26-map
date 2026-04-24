@@ -8,7 +8,7 @@ export function BaseLayers() {
 			<GeoJsonLayer
 				src="./layers/outline.geojson"
 				style={{ color: "transparent", fillColor: "#cdebb0", fillOpacity: 1 }}
-				svgPadding={10}
+				svgPadding={1}
 				pane="baseFill"
 			/>
 			<GeoJsonLayer
@@ -18,7 +18,7 @@ export function BaseLayers() {
 					fillColor: "url(#forest-texture)",
 					fillOpacity: 1,
 				}}
-				svgPadding={10}
+				svgPadding={1}
 				pane="baseFill"
 				patternDef={`
 					<pattern id="forest-texture" patternUnits="userSpaceOnUse" width="256" height="256">
@@ -48,7 +48,7 @@ export function BaseLayers() {
 					fillColor: "#d9cfc7",
 					fillOpacity: 1,
 				}}
-				smoothFactor={0}
+				useCanvas
 			/>
 		</>
 	);
