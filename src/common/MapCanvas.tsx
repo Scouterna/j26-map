@@ -67,7 +67,7 @@ export function MapCanvas({
 		if (interactive) {
 			control.zoom({ position: "bottomright" }).addTo(m);
 			m.setMinZoom(14);
-			m.setMaxZoom(19);
+			m.setMaxZoom(18);
 		} else {
 			m.dragging.disable();
 			m.touchZoom.disable();
@@ -81,7 +81,10 @@ export function MapCanvas({
 		m.setView(center, zoom);
 
 		function updateZoomVar() {
-			containerRef.current?.style.setProperty("--map-zoom", String(m.getZoom()));
+			containerRef.current?.style.setProperty(
+				"--map-zoom",
+				String(m.getZoom()),
+			);
 		}
 		updateZoomVar();
 		m.on("zoomend", updateZoomVar);
