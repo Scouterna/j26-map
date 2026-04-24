@@ -12,6 +12,7 @@ import { useMap } from "../MapCanvas";
 import { createMarkerIcon } from "../marker";
 
 const MARKER_SIZE = 28;
+const MIN_ZOOM = 18;
 
 function createClusterIcon(categories: Category[]) {
 	const unique = [...new Set(categories.map((c) => c.color))];
@@ -44,14 +45,12 @@ function createClusterIcon(categories: Category[]) {
 	});
 }
 
-const PRIORITY_MIN_ZOOM: Record<number, number> = {
-	1: 15,
-	2: 16,
-	3: 17,
-	4: 18,
+type Props = {
+	/** IDs to show regardless of zoom level, e.g. from search results */
+	visibleIds?: Set<string>;
 };
 
-export function LocationsLayer() {
+export function LocationsLayer({ visibleIds }: Props = {}) {
 	const map = useMap();
 	const [locations, setLocations] = useState<Location[]>([]);
 
@@ -87,32 +86,20 @@ export function LocationsLayer() {
 				}),
 		);
 
-		const thresholds = [...new Set(Object.values(PRIORITY_MIN_ZOOM))].sort((a, b) => a - b);
-		let lastThresholdZoom: number | null = null;
-
-		function getThresholdZoom(zoom: number) {
-			// Which thresholds are currently active (zoom >= threshold)
-			return thresholds.filter((t) => zoom >= t).length;
-		}
+		let lastVisible: boolean | null = null;
 
 		function updateVisibility() {
-			const zoom = mapRef.getZoom();
-			const thresholdZoom = getThresholdZoom(zoom);
-			if (thresholdZoom === lastThresholdZoom) return;
-			lastThresholdZoom = thresholdZoom;
+			const visible = mapRef.getZoom() >= MIN_ZOOM;
+			if (visible === lastVisible) return;
+			lastVisible = visible;
 
-			const toAdd: L.Layer[] = [];
-			const toRemove: L.Layer[] = [];
-			for (const [i, marker] of markers.entries()) {
-				const minZoom = PRIORITY_MIN_ZOOM[locations[i].category.priority];
-				if (zoom >= minZoom) {
-					toAdd.push(marker);
-				} else {
-					toRemove.push(marker);
-				}
+			if (visible) {
+				cluster.addLayers(markers);
+			} else {
+				const pinned = visibleIds ? markers.filter((_, i) => visibleIds.has(locations[i].id)) : [];
+				cluster.removeLayers(markers.filter((_, i) => !visibleIds?.has(locations[i].id)));
+				if (pinned.length) cluster.addLayers(pinned);
 			}
-			cluster.addLayers(toAdd);
-			cluster.removeLayers(toRemove);
 		}
 
 		updateVisibility();
@@ -123,7 +110,7 @@ export function LocationsLayer() {
 			mapRef.off("zoomend", updateVisibility);
 			mapRef.removeLayer(cluster);
 		};
-	}, [map, locations]);
+	}, [map, locations, visibleIds]);
 
 	return null;
 }
