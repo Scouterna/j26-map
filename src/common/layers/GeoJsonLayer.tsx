@@ -1,4 +1,4 @@
-import { geoJSON, SVG, type PathOptions } from "leaflet";
+import { type PathOptions, SVG, geoJSON } from "leaflet";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -19,6 +19,8 @@ type Props = {
 	svgPadding?: number;
 	/** SVG <pattern> element string; injected into a hidden body-level SVG so url(#id) resolves across all renderers */
 	patternDef?: string;
+	/** Leaflet pane name; controls z-ordering relative to other layers */
+	pane?: string;
 };
 
 export function GeoJsonLayer({
@@ -30,6 +32,7 @@ export function GeoJsonLayer({
 	smoothFactor,
 	svgPadding,
 	patternDef,
+	pane,
 }: Props) {
 	const map = useMap();
 
@@ -59,7 +62,8 @@ export function GeoJsonLayer({
 				layer = geoJSON(data, {
 					// smoothFactor is a PolylineOptions property missing from GeoJSONOptions typings
 					...(smoothFactor !== undefined && ({ smoothFactor } as object)),
-					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding }) }),
+					...(pane && { pane }),
+					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding, ...(pane && { pane }) }) }),
 					style: weightAttribute
 						? (feature) =>
 								getScaledStyle(
@@ -140,7 +144,7 @@ export function GeoJsonLayer({
 			layer?.remove();
 			m.off("zoom", onZoom);
 		};
-	}, [map, src, style, geoScale, weightAttribute, patternDef]);
+	}, [map, src, style, geoScale, weightAttribute, patternDef, pane]);
 
 	return null;
 }

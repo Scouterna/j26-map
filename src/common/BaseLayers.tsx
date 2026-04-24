@@ -1,12 +1,15 @@
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
+import { MapPane } from "./layers/MapPane";
 
 export function BaseLayers() {
 	return (
 		<>
+			<MapPane name="baseFill" zIndex={300} />
 			<GeoJsonLayer
 				src="./layers/outline.geojson"
 				style={{ color: "transparent", fillColor: "#cdebb0", fillOpacity: 1 }}
 				svgPadding={10}
+				pane="baseFill"
 			/>
 			<GeoJsonLayer
 				src="./layers/forest.geojson"
@@ -16,6 +19,7 @@ export function BaseLayers() {
 					fillOpacity: 1,
 				}}
 				svgPadding={10}
+				pane="baseFill"
 				patternDef={`
 					<pattern id="forest-texture" patternUnits="userSpaceOnUse" width="256" height="256">
 						<rect width="256" height="256" fill="#add19e"/>
