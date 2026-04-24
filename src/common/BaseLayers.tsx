@@ -7,7 +7,7 @@ export function BaseLayers() {
 		<>
 			<MapPane name="baseFill" zIndex={300} />
 			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} />
-			<MapPane name="districtsBorder" zIndex={410} showAtZoom={18} />
+			<MapPane name="districtsBorder" zIndex={360} />
 			<MapPane name="roadsOutline" zIndex={420} />
 			<MapPane name="roadsFill" zIndex={421} />
 			<MapPane name="tents" zIndex={430} />
@@ -54,6 +54,7 @@ export function BaseLayers() {
 				geoScale
 				weightAttribute="width"
 				weightOffset={2}
+				svgPadding={0.5}
 				pane="roadsOutline"
 			/>
 			<GeoJsonLayer
@@ -61,6 +62,7 @@ export function BaseLayers() {
 				style={{ color: "#ffffff", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
+				svgPadding={0.5}
 				pane="roadsFill"
 			/>
 			<GeoJsonLayer

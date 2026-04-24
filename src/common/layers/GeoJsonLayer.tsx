@@ -30,7 +30,7 @@ async function rasterizePatternImages(defs: SVGDefsElement) {
 	}
 }
 
-type Props = {
+type BaseProps = {
 	src: string;
 	style?: PathOptions;
 	/** If true, weight scales with zoom so the line covers a fixed geographic area */
@@ -41,8 +41,6 @@ type Props = {
 	weightOffset?: number;
 	/** Leaflet path simplification factor; 0 = no simplification (default: 1) */
 	smoothFactor?: number;
-	/** SVG renderer padding as a fraction of map size (default: 0.1) */
-	svgPadding?: number;
 	/** SVG <pattern> element string; injected into a hidden body-level SVG so url(#id) resolves across all renderers */
 	patternDef?: string;
 	/** Leaflet pane name; controls z-ordering relative to other layers */
@@ -51,9 +49,11 @@ type Props = {
 	colorAttribute?: string;
 	/** Feature property to use as fillColor */
 	fillColorAttribute?: string;
-	/** Use Canvas renderer instead of SVG; faster for many polygons on mobile */
-	useCanvas?: boolean;
 };
+
+type Props =
+	| (BaseProps & { useCanvas: true; svgPadding?: never })
+	| (BaseProps & { useCanvas?: false; svgPadding: number });
 
 export function GeoJsonLayer({
 	src,
