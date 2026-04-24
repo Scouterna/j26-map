@@ -6,6 +6,8 @@ export function BaseLayers() {
 	return (
 		<>
 			<MapPane name="baseFill" zIndex={300} />
+			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} />
+			<MapPane name="districtsBorder" zIndex={410} showAtZoom={18} />
 			<AreaLabelsLayer />
 			<GeoJsonLayer
 				src="./layers/outline.geojson"
@@ -28,6 +30,20 @@ export function BaseLayers() {
 						<image href="./symbols/leaftype_unknown.svg" width="256" height="256" opacity="0.5"/>
 					</pattern>
 				`}
+			/>
+			<GeoJsonLayer
+				src="./layers/districts.geojson"
+				style={{ color: "transparent", weight: 0, fillOpacity: 0.2 }}
+				fillColorAttribute="color"
+				svgPadding={0.5}
+				pane="districtsFill"
+			/>
+			<GeoJsonLayer
+				src="./layers/districts.geojson"
+				style={{ weight: 4, fillOpacity: 0, opacity: 0.6 }}
+				colorAttribute="color"
+				svgPadding={0.5}
+				pane="districtsBorder"
 			/>
 			<GeoJsonLayer // Roads gray outline
 				src="./layers/roads.geojson"

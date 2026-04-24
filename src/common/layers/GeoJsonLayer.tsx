@@ -47,6 +47,10 @@ type Props = {
 	patternDef?: string;
 	/** Leaflet pane name; controls z-ordering relative to other layers */
 	pane?: string;
+	/** Feature property to use as stroke color */
+	colorAttribute?: string;
+	/** Feature property to use as fillColor */
+	fillColorAttribute?: string;
 	/** Use Canvas renderer instead of SVG; faster for many polygons on mobile */
 	useCanvas?: boolean;
 };
@@ -61,6 +65,8 @@ export function GeoJsonLayer({
 	svgPadding,
 	patternDef,
 	pane,
+	colorAttribute,
+	fillColorAttribute,
 	useCanvas,
 }: Props) {
 	const map = useMap();
@@ -74,11 +80,14 @@ export function GeoJsonLayer({
 		let patternHolder: SVGSVGElement | undefined;
 		const baseWeight = style?.weight ?? 3;
 
-		function getScaledStyle(widthMultiplier = 1): PathOptions {
+		function getFeatureStyle(feature?: unknown, widthMultiplier = 1): PathOptions {
+			const props = (feature as { properties?: Record<string, unknown> })?.properties ?? {};
 			const scale = geoScale ? 2 ** (m.getZoom() - GEO_SCALE_BASE_ZOOM) : 1;
 			return {
 				...style,
 				weight: (baseWeight * widthMultiplier + weightOffset) * scale,
+				...(colorAttribute && props[colorAttribute] && { color: props[colorAttribute] as string }),
+				...(fillColorAttribute && props[fillColorAttribute] && { fillColor: props[fillColorAttribute] as string }),
 			};
 		}
 
@@ -93,14 +102,13 @@ export function GeoJsonLayer({
 					...(pane && { pane }),
 					...(useCanvas && { renderer: new Canvas({ padding: 0.5, ...(pane && { pane }) }) }),
 					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding, ...(pane && { pane }) }) }),
-					style: weightAttribute
-						? (feature) =>
-								getScaledStyle(
-									((feature?.properties as Record<string, unknown>)?.[
-										weightAttribute
-									] as number) ?? 1,
-								)
-						: getScaledStyle(),
+					style: (feature) =>
+						getFeatureStyle(
+							feature,
+							weightAttribute
+								? ((feature?.properties as Record<string, unknown>)?.[weightAttribute] as number) ?? 1
+								: 1,
+						),
 				}).addTo(m);
 
 				if (patternDef) {
@@ -131,12 +139,11 @@ export function GeoJsonLayer({
 
 		function onZoom() {
 			layer?.setStyle((feature) =>
-				getScaledStyle(
+				getFeatureStyle(
+					feature,
 					weightAttribute
-						? (((feature?.properties as Record<string, unknown>)?.[
-								weightAttribute
-							] as number) ?? 1)
-						: undefined,
+						? ((feature?.properties as Record<string, unknown>)?.[weightAttribute] as number) ?? 1
+						: 1,
 				),
 			);
 		}
@@ -149,7 +156,7 @@ export function GeoJsonLayer({
 			layer?.remove();
 			m.off("zoomend", onZoom);
 		};
-	}, [map, src, style, geoScale, weightAttribute, patternDef, pane, useCanvas]);
+	}, [map, src, style, geoScale, weightAttribute, colorAttribute, fillColorAttribute, patternDef, pane, useCanvas]);
 
 	return null;
 }
