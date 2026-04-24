@@ -66,6 +66,7 @@ export function LocationsLayer() {
 			showCoverageOnHover: false,
 			maxClusterRadius: 30,
 			disableClusteringAtZoom: 18,
+			removeOutsideVisibleBounds: false,
 			iconCreateFunction(group: MarkerCluster) {
 				const categories = group
 					.getAllChildMarkers()
