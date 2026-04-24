@@ -8,6 +8,11 @@ import "leaflet-edgebuffer";
 const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
 
+const MAX_BOUNDS: [[number, number], [number, number]] = [
+	[55.971, 14.115],
+	[55.992, 14.157],
+];
+
 const MapContext = createContext<LMap | null>(null);
 
 export function useMap() {
@@ -41,11 +46,13 @@ export function MapCanvas({
 			zoomControl: false,
 			fadeAnimation,
 			renderer: svg({ padding: 1 }),
+			maxBounds: MAX_BOUNDS,
+			maxBoundsViscosity: 1,
 		});
 
 		new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-			maxZoom: 20,
-			minZoom: 12,
+			maxZoom: 19,
+			minZoom: 10,
 			attribution:
 				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 			edgeBufferTiles: 1,
@@ -53,8 +60,8 @@ export function MapCanvas({
 
 		if (interactive) {
 			control.zoom({ position: "bottomright" }).addTo(m);
-			m.setMinZoom(15);
-			m.setMaxZoom(18);
+			m.setMinZoom(14);
+			m.setMaxZoom(19);
 		} else {
 			m.dragging.disable();
 			m.touchZoom.disable();

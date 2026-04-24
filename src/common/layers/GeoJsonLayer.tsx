@@ -1,4 +1,4 @@
-import { geoJSON, type PathOptions } from "leaflet";
+import { geoJSON, SVG, type PathOptions } from "leaflet";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -13,48 +13,134 @@ type Props = {
 	weightAttribute?: string;
 	/** Fixed pixel amount added to the computed weight, unaffected by scaling */
 	weightOffset?: number;
+	/** Leaflet path simplification factor; 0 = no simplification (default: 1) */
+	smoothFactor?: number;
+	/** SVG renderer padding as a fraction of map size (default: 0.1) */
+	svgPadding?: number;
+	/** SVG <pattern> element string; injected into a hidden body-level SVG so url(#id) resolves across all renderers */
+	patternDef?: string;
 };
 
-export function GeoJsonLayer({ src, style, geoScale, weightAttribute, weightOffset = 0 }: Props) {
+export function GeoJsonLayer({
+	src,
+	style,
+	geoScale,
+	weightAttribute,
+	weightOffset = 0,
+	smoothFactor,
+	svgPadding,
+	patternDef,
+}: Props) {
 	const map = useMap();
 
 	useEffect(() => {
 		if (!map) return;
+		const m = map;
 
 		let cancelled = false;
 		let layer: ReturnType<typeof geoJSON> | undefined;
+		let patternHolder: SVGSVGElement | undefined;
+		let removePatternScale: (() => void) | undefined;
 		const baseWeight = style?.weight ?? 3;
 
 		function getScaledStyle(widthMultiplier = 1): PathOptions {
-			const scale = geoScale ? 2 ** (map!.getZoom() - GEO_SCALE_BASE_ZOOM) : 1;
-			return { ...style, weight: (baseWeight * widthMultiplier + weightOffset) * scale };
+			const scale = geoScale ? 2 ** (m.getZoom() - GEO_SCALE_BASE_ZOOM) : 1;
+			return {
+				...style,
+				weight: (baseWeight * widthMultiplier + weightOffset) * scale,
+			};
 		}
 
 		fetch(src)
 			.then((res) => res.json())
 			.then((data) => {
 				if (cancelled) return;
+
 				layer = geoJSON(data, {
+					// smoothFactor is a PolylineOptions property missing from GeoJSONOptions typings
+					...(smoothFactor !== undefined && ({ smoothFactor } as object)),
+					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding }) }),
 					style: weightAttribute
-						? (feature) => getScaledStyle((feature?.properties as Record<string, unknown>)?.[weightAttribute] as number ?? 1)
+						? (feature) =>
+								getScaledStyle(
+									((feature?.properties as Record<string, unknown>)?.[
+										weightAttribute
+									] as number) ?? 1,
+								)
 						: getScaledStyle(),
-				}).addTo(map!);
+				}).addTo(m);
+
+				if (patternDef) {
+					// Inject into a hidden <svg> at document body level so url(#id) resolves
+					// across all SVG elements in the document, regardless of which Leaflet renderer
+					// owns the path.
+					const ns = "http://www.w3.org/2000/svg";
+					patternHolder = document.createElementNS(ns, "svg") as SVGSVGElement;
+					patternHolder.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden");
+					patternHolder.setAttribute("aria-hidden", "true");
+					const defs = document.createElementNS(ns, "defs") as SVGDefsElement;
+					patternHolder.appendChild(defs);
+					document.body.appendChild(patternHolder);
+
+					const doc = new DOMParser().parseFromString(
+						`<svg xmlns="${ns}">${patternDef}</svg>`,
+						"image/svg+xml",
+					);
+					const el = doc.documentElement.firstElementChild;
+					if (el) defs.appendChild(document.importNode(el, true));
+
+					// Cross-fade the pattern content across zoom transitions to hide the
+					// snap that occurs when Leaflet redraws paths after the CSS animation ends.
+					const patternEl = defs.querySelector("pattern");
+					if (patternEl) {
+						const p = patternEl;
+						const fadeTargets = Array.from(p.children).filter(
+							(c) => c.tagName !== "rect",
+						) as SVGElement[];
+						for (const el of fadeTargets) el.style.transition = "opacity 0.15s";
+
+						function fadeOut() {
+							for (const el of fadeTargets) el.style.opacity = "0";
+						}
+						function fadeIn() {
+							// rAF ensures the fade starts after Leaflet's post-zoom redraw
+							requestAnimationFrame(() => {
+								for (const el of fadeTargets) el.style.opacity = "";
+							});
+						}
+
+						m.on("zoomstart", fadeOut);
+						m.on("zoomend", fadeIn);
+						removePatternScale = () => {
+							m.off("zoomstart", fadeOut);
+							m.off("zoomend", fadeIn);
+						};
+					}
+				}
 			});
 
 		function onZoom() {
 			layer?.setStyle((feature) =>
-				getScaledStyle(weightAttribute ? (feature?.properties as Record<string, unknown>)?.[weightAttribute] as number ?? 1 : undefined),
+				getScaledStyle(
+					weightAttribute
+						? (((feature?.properties as Record<string, unknown>)?.[
+								weightAttribute
+							] as number) ?? 1)
+						: undefined,
+				),
 			);
 		}
 
-		if (geoScale) map.on("zoom", onZoom);
+		if (geoScale) m.on("zoom", onZoom);
 
 		return () => {
 			cancelled = true;
+			removePatternScale?.();
+			patternHolder?.remove();
 			layer?.remove();
-			map.off("zoom", onZoom);
+			m.off("zoom", onZoom);
 		};
-	}, [map, src, style, geoScale, weightAttribute]);
+	}, [map, src, style, geoScale, weightAttribute, patternDef]);
 
 	return null;
 }
