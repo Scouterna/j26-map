@@ -61,6 +61,7 @@ export function LocationsLayer() {
 
 	useEffect(() => {
 		if (!map || locations.length === 0) return;
+		const mapRef = map;
 
 		const cluster = new L.MarkerClusterGroup({
 			showCoverageOnHover: false,
@@ -86,25 +87,41 @@ export function LocationsLayer() {
 				}),
 		);
 
+		const thresholds = [...new Set(Object.values(PRIORITY_MIN_ZOOM))].sort((a, b) => a - b);
+		let lastThresholdZoom: number | null = null;
+
+		function getThresholdZoom(zoom: number) {
+			// Which thresholds are currently active (zoom >= threshold)
+			return thresholds.filter((t) => zoom >= t).length;
+		}
+
 		function updateVisibility() {
-			const zoom = map!.getZoom();
+			const zoom = mapRef.getZoom();
+			const thresholdZoom = getThresholdZoom(zoom);
+			if (thresholdZoom === lastThresholdZoom) return;
+			lastThresholdZoom = thresholdZoom;
+
+			const toAdd: L.Layer[] = [];
+			const toRemove: L.Layer[] = [];
 			for (const [i, marker] of markers.entries()) {
 				const minZoom = PRIORITY_MIN_ZOOM[locations[i].category.priority];
 				if (zoom >= minZoom) {
-					cluster.addLayer(marker);
+					toAdd.push(marker);
 				} else {
-					cluster.removeLayer(marker);
+					toRemove.push(marker);
 				}
 			}
+			cluster.addLayers(toAdd);
+			cluster.removeLayers(toRemove);
 		}
 
 		updateVisibility();
-		map.on("zoomend", updateVisibility);
-		map.addLayer(cluster);
+		mapRef.on("zoomend", updateVisibility);
+		mapRef.addLayer(cluster);
 
 		return () => {
-			map.off("zoomend", updateVisibility);
-			map.removeLayer(cluster);
+			mapRef.off("zoomend", updateVisibility);
+			mapRef.removeLayer(cluster);
 		};
 	}, [map, locations]);
 

@@ -4,6 +4,32 @@ import { useMap } from "../MapCanvas";
 
 const GEO_SCALE_BASE_ZOOM = 17.5;
 
+async function rasterizePatternImages(defs: SVGDefsElement) {
+	for (const img of Array.from(defs.querySelectorAll("image"))) {
+		const href = img.getAttribute("href") ?? "";
+		if (!href || href.startsWith("data:")) continue;
+		try {
+			const w = parseFloat(img.getAttribute("width") ?? "256");
+			const h = parseFloat(img.getAttribute("height") ?? "256");
+			const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+				const el = new Image(w, h);
+				el.onload = () => resolve(el);
+				el.onerror = reject;
+				el.src = href;
+			});
+			const canvas = document.createElement("canvas");
+			canvas.width = w;
+			canvas.height = h;
+			const ctx = canvas.getContext("2d");
+			if (!ctx) continue;
+			ctx.drawImage(image, 0, 0, w, h);
+			img.setAttribute("href", canvas.toDataURL("image/png"));
+		} catch {
+			// fall back to original SVG reference
+		}
+	}
+}
+
 type Props = {
 	src: string;
 	style?: PathOptions;
@@ -46,7 +72,6 @@ export function GeoJsonLayer({
 		let cancelled = false;
 		let layer: ReturnType<typeof geoJSON> | undefined;
 		let patternHolder: SVGSVGElement | undefined;
-		let removePatternScale: (() => void) | undefined;
 		const baseWeight = style?.weight ?? 3;
 
 		function getScaledStyle(widthMultiplier = 1): PathOptions {
@@ -97,33 +122,10 @@ export function GeoJsonLayer({
 					const el = doc.documentElement.firstElementChild;
 					if (el) defs.appendChild(document.importNode(el, true));
 
-					// Cross-fade the pattern content across zoom transitions to hide the
-					// snap that occurs when Leaflet redraws paths after the CSS animation ends.
-					const patternEl = defs.querySelector("pattern");
-					if (patternEl) {
-						const p = patternEl;
-						const fadeTargets = Array.from(p.children).filter(
-							(c) => c.tagName !== "rect",
-						) as SVGElement[];
-						for (const el of fadeTargets) el.style.transition = "opacity 0.15s";
-
-						function fadeOut() {
-							for (const el of fadeTargets) el.style.opacity = "0";
-						}
-						function fadeIn() {
-							// rAF ensures the fade starts after Leaflet's post-zoom redraw
-							requestAnimationFrame(() => {
-								for (const el of fadeTargets) el.style.opacity = "";
-							});
-						}
-
-						m.on("zoomstart", fadeOut);
-						m.on("zoomend", fadeIn);
-						removePatternScale = () => {
-							m.off("zoomstart", fadeOut);
-							m.off("zoomend", fadeIn);
-						};
-					}
+					// Pre-rasterize any SVG <image> elements in the pattern to PNG data URLs.
+					// This lets the browser cache a bitmap tile instead of re-rendering the
+					// SVG vector on every paint, which is a major source of zoom lag.
+					void rasterizePatternImages(defs);
 				}
 			});
 
@@ -143,7 +145,6 @@ export function GeoJsonLayer({
 
 		return () => {
 			cancelled = true;
-			removePatternScale?.();
 			patternHolder?.remove();
 			layer?.remove();
 			m.off("zoomend", onZoom);
