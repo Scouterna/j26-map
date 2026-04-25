@@ -25,7 +25,7 @@ function createLabelIcon(name: string, color = "#3d5a3e") {
 			position: absolute;
 			top: 50%;
 			left: 50%;
-			font-size: calc(14px * pow(2, min(var(--map-zoom), 17) - 16));
+			font-size: calc(18px * pow(2, (min(var(--map-zoom), 17) - 16) * 0.4));
 			font-weight: 600;
 			color: ${color};
 			text-shadow: 0 0 3px #cdebb0, 0 0 6px #cdebb0;
@@ -39,7 +39,9 @@ function createLabelIcon(name: string, color = "#3d5a3e") {
 
 export function AreaLabelsLayer() {
 	const map = useMap();
-	const [labels, setLabels] = useState<{ name: string; color?: string; position: PointTuple }[]>([]);
+	const [labels, setLabels] = useState<
+		{ name: string; color?: string; position: PointTuple }[]
+	>([]);
 
 	useEffect(() => {
 		fetch("./layers/districts.geojson")
