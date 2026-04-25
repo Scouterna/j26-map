@@ -89,10 +89,50 @@ export function MapCanvas({
 		updateZoomVar();
 		m.on("zoomend", updateZoomVar);
 
+		let rafId: number | null = null;
+
+		function readAnimZoom() {
+			const mapPane = m.getPanes().mapPane as HTMLElement;
+			const transformStr = mapPane.style.transform;
+			if (!transformStr) return m.getZoom();
+			const scale = new DOMMatrix(transformStr).a;
+			return scale > 0 ? m.getZoom() + Math.log2(scale) : m.getZoom();
+		}
+
+		function tickAnimZoom() {
+			containerRef.current?.style.setProperty(
+				"--map-zoom-anim",
+				String(readAnimZoom()),
+			);
+			rafId = requestAnimationFrame(tickAnimZoom);
+		}
+
+		function onZoomAnimStart() {
+			if (rafId === null) rafId = requestAnimationFrame(tickAnimZoom);
+		}
+
+		function onZoomAnimEnd() {
+			if (rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
+			containerRef.current?.style.setProperty(
+				"--map-zoom-anim",
+				String(m.getZoom()),
+			);
+		}
+
+		containerRef.current.style.setProperty("--map-zoom-anim", String(m.getZoom()));
+		m.on("zoomanim", onZoomAnimStart);
+		m.on("zoomend", onZoomAnimEnd);
+
 		setMap(m);
 
 		return () => {
+			if (rafId !== null) cancelAnimationFrame(rafId);
 			m.off("zoomend", updateZoomVar);
+			m.off("zoomanim", onZoomAnimStart);
+			m.off("zoomend", onZoomAnimEnd);
 			m.remove();
 			setMap(null);
 		};
