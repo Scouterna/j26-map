@@ -100,7 +100,7 @@ export function GeoJsonLayer({
 					// smoothFactor is a PolylineOptions property missing from GeoJSONOptions typings
 					...(smoothFactor !== undefined && ({ smoothFactor } as object)),
 					...(pane && { pane }),
-					...(useCanvas && { renderer: new Canvas({ padding: 0.5, ...(pane && { pane }) }) }),
+					...(useCanvas && { renderer: new Canvas({ padding: 1, ...(pane && { pane }) }) }),
 					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding, ...(pane && { pane }) }) }),
 					style: (feature) =>
 						getFeatureStyle(
