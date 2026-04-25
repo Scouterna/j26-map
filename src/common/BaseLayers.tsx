@@ -1,6 +1,7 @@
 import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
 import { MapPane } from "./layers/MapPane";
+import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 
 export function BaseLayers() {
 	return (
@@ -13,6 +14,7 @@ export function BaseLayers() {
 			<MapPane name="roadsFill" zIndex={421} />
 			<MapPane name="tents" zIndex={430} />
 			<AreaLabelsLayer />
+			<VillageLabelsLayer />
 			<GeoJsonLayer
 				src="./layers/outline.geojson"
 				style={{ color: "transparent", fillColor: "#cdebb0", fillOpacity: 1 }}

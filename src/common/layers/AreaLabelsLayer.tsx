@@ -24,6 +24,11 @@ function centroid(coords: number[][]): PointTuple {
 		cy += (y0 + y1) * cross;
 	}
 	area /= 2;
+	if (Math.abs(area) < 1e-12) {
+		const lng = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+		const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+		return [lat, lng];
+	}
 	cx /= 6 * area;
 	cy /= 6 * area;
 	return [cy, cx]; // [lat, lng]
