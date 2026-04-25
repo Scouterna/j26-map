@@ -123,6 +123,29 @@ export function MapCanvas({
 		m.on("zoomanim", onZoomAnimStart);
 		m.on("zoomend", onZoomAnimEnd);
 
+		function onTouchStart(e: TouchEvent) {
+			if (e.touches.length >= 2 && rafId === null)
+				rafId = requestAnimationFrame(tickAnimZoom);
+		}
+
+		function onTouchEnd(e: TouchEvent) {
+			if (e.touches.length === 0 && rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+				containerRef.current?.style.setProperty(
+					"--map-zoom-anim",
+					String(m.getZoom()),
+				);
+			}
+		}
+
+		containerRef.current.addEventListener("touchstart", onTouchStart, {
+			passive: true,
+		});
+		containerRef.current.addEventListener("touchend", onTouchEnd, {
+			passive: true,
+		});
+
 		setMap(m);
 
 		return () => {
@@ -130,6 +153,8 @@ export function MapCanvas({
 			m.off("zoomend", updateZoomVar);
 			m.off("zoomanim", onZoomAnimStart);
 			m.off("zoomend", onZoomAnimEnd);
+			containerRef.current?.removeEventListener("touchstart", onTouchStart);
+			containerRef.current?.removeEventListener("touchend", onTouchEnd);
 			m.remove();
 			setMap(null);
 		};
