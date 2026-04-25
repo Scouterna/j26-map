@@ -1,9 +1,8 @@
-import { DivIcon, LayerGroup, Marker, type PointTuple, type ZoomAnimEvent } from "leaflet";
+import { DivIcon, LayerGroup, Marker, type PointTuple } from "leaflet";
 import { useEffect, useState } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
 const HIDE_AT_ZOOM = 18;
-const FADE_MS = 250;
 
 type DistrictFeature = {
 	properties: { name: string; color?: string };
@@ -81,8 +80,8 @@ export function AreaLabelsLayer() {
 
 		const pane = mapRef.createPane("areaLabelsPane");
 		pane.style.zIndex = "450";
-		pane.style.opacity = "1";
-		pane.style.transition = `opacity ${FADE_MS}ms`;
+		pane.style.transition = "opacity 250ms";
+		pane.style.opacity = `clamp(0, calc((${HIDE_AT_ZOOM} - var(--map-zoom-anim)) * 9999), 1)`;
 
 		const group = new LayerGroup(
 			labels.map(
@@ -95,26 +94,9 @@ export function AreaLabelsLayer() {
 			),
 		);
 
-		function setOpacity(zoom: number) {
-			pane.style.opacity = zoom >= HIDE_AT_ZOOM ? "0" : "1";
-		}
-
-		function onZoomAnim(e: ZoomAnimEvent) {
-			setOpacity(e.zoom);
-		}
-
-		function onZoomEnd() {
-			setOpacity(mapRef.getZoom());
-		}
-
-		setOpacity(mapRef.getZoom());
-		mapRef.on("zoomanim", onZoomAnim);
-		mapRef.on("zoomend", onZoomEnd);
 		mapRef.addLayer(group);
 
 		return () => {
-			mapRef.off("zoomanim", onZoomAnim);
-			mapRef.off("zoomend", onZoomEnd);
 			mapRef.removeLayer(group);
 			pane.remove();
 		};

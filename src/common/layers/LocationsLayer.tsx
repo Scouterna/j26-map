@@ -1,4 +1,4 @@
-import { LayerGroup, Marker, type ZoomAnimEvent } from "leaflet";
+import { LayerGroup, Marker } from "leaflet";
 import { useEffect, useState } from "preact/hooks";
 import { getIconURL } from "../icons";
 import { getLocations } from "../locationService";
@@ -8,7 +8,6 @@ import { createMarkerIcon } from "../marker";
 
 const MIN_ZOOM = 18;
 const MIN_ZOOM_LABELS = 19;
-const FADE_MS = 250;
 
 export function LocationsLayer() {
 	const map = useMap();
@@ -24,13 +23,13 @@ export function LocationsLayer() {
 
 		const pane = mapRef.createPane("locationsPane");
 		pane.style.zIndex = "600";
-		pane.style.opacity = "0";
-		pane.style.transition = `opacity ${FADE_MS}ms`;
+		pane.style.transition = "opacity 250ms";
+		pane.style.opacity = `clamp(0, calc((var(--map-zoom-anim) - ${MIN_ZOOM - 0.01}) * 9999), 1)`;
 
 		const labelPane = mapRef.createPane("locationsLabelPane");
 		labelPane.style.zIndex = "601";
-		labelPane.style.opacity = "0";
-		labelPane.style.transition = `opacity ${FADE_MS}ms`;
+		labelPane.style.transition = "opacity 250ms";
+		labelPane.style.opacity = `clamp(0, calc((var(--map-zoom-anim) - ${MIN_ZOOM_LABELS - 0.01}) * 9999), 1)`;
 
 		const group = new LayerGroup(
 			locations.map((loc) => {
@@ -52,28 +51,9 @@ export function LocationsLayer() {
 			}),
 		);
 
-		function setVisibility(zoom: number) {
-			pane.style.opacity = zoom >= MIN_ZOOM ? "1" : "0";
-			labelPane.style.opacity = zoom >= MIN_ZOOM_LABELS ? "1" : "0";
-		}
-
-		function onZoomAnim(e: ZoomAnimEvent) {
-			if (e.zoom < MIN_ZOOM) pane.style.opacity = "0";
-			if (e.zoom < MIN_ZOOM_LABELS) labelPane.style.opacity = "0";
-		}
-
-		function onZoomEnd() {
-			setVisibility(mapRef.getZoom());
-		}
-
-		setVisibility(mapRef.getZoom());
-		mapRef.on("zoomanim", onZoomAnim);
-		mapRef.on("zoomend", onZoomEnd);
 		mapRef.addLayer(group);
 
 		return () => {
-			mapRef.off("zoomanim", onZoomAnim);
-			mapRef.off("zoomend", onZoomEnd);
 			mapRef.removeLayer(group);
 			pane.remove();
 			labelPane.remove();
