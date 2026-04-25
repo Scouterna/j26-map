@@ -6,6 +6,7 @@ export function BaseLayers() {
 	return (
 		<>
 			<MapPane name="baseFill" zIndex={300} />
+			<MapPane name="villages" zIndex={320} />
 			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} />
 			<MapPane name="districtsBorder" zIndex={360} />
 			<MapPane name="roadsOutline" zIndex={420} />
@@ -33,6 +34,18 @@ export function BaseLayers() {
 						<image href="./symbols/leaftype_unknown.svg" width="256" height="256" opacity="0.5"/>
 					</pattern>
 				`}
+			/>
+			<GeoJsonLayer
+				src="./layers/villages.geojson"
+				style={{
+					color: "#c8a870",
+					weight: 1,
+					fillColor: "#f0e6d0",
+					fillOpacity: 0.5,
+					fill: true,
+				}}
+				svgPadding={0.5}
+				pane="villages"
 			/>
 			<GeoJsonLayer
 				src="./layers/districts.geojson"
