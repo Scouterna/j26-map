@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# J26 CLI
+.j26
+.j26.local.yaml

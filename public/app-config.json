@@ -1,0 +1,11 @@
+{
+	"navigation": [
+		{
+			"type": "page",
+			"id": "page_map",
+			"label": "map.map.label",
+			"icon": "map",
+			"path": "/_services/map"
+		}
+	]
+}

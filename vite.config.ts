@@ -7,7 +7,7 @@ import { defineConfig } from "vite";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-	base: "./",
+	base: "/_services/map",
 	plugins: [preact(), tailwindcss()],
 	build: {
 		rollupOptions: {
@@ -17,5 +17,8 @@ export default defineConfig({
 				picker: resolve(__dirname, "picker.html"),
 			},
 		},
+	},
+	server: {
+		allowedHosts: ["local.j26.se"],
 	},
 });
