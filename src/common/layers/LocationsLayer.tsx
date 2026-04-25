@@ -7,6 +7,7 @@ import { useMap } from "../MapCanvas";
 import { createMarkerIcon } from "../marker";
 
 const MIN_ZOOM = 18;
+const MIN_ZOOM_LABELS = 19;
 const FADE_MS = 250;
 
 export function LocationsLayer() {
@@ -26,21 +27,35 @@ export function LocationsLayer() {
 		pane.style.opacity = "0";
 		pane.style.transition = `opacity ${FADE_MS}ms`;
 
+		const labelPane = mapRef.createPane("locationsLabelPane");
+		labelPane.style.zIndex = "601";
+		labelPane.style.opacity = "0";
+		labelPane.style.transition = `opacity ${FADE_MS}ms`;
+
 		const group = new LayerGroup(
-			locations.map(
-				(loc) =>
-					new Marker(loc.position, {
-						pane: "locationsPane",
-						icon: createMarkerIcon(
-							loc.category.color,
-							getIconURL(loc.category.iconName, loc.category.iconVariant),
-						),
-					}),
-			),
+			locations.map((loc) => {
+				const marker = new Marker(loc.position, {
+					pane: "locationsPane",
+					icon: createMarkerIcon(
+						loc.category.color,
+						getIconURL(loc.category.iconName, loc.category.iconVariant),
+					),
+				});
+				marker.bindTooltip(loc.name, {
+					permanent: true,
+					direction: "bottom",
+					className: "j26-label",
+					pane: "locationsLabelPane",
+					offset: [0, 2],
+				});
+				return marker;
+			}),
 		);
 
 		function updateVisibility() {
-			pane.style.opacity = mapRef.getZoom() >= MIN_ZOOM ? "1" : "0";
+			const zoom = mapRef.getZoom();
+			pane.style.opacity = zoom >= MIN_ZOOM ? "1" : "0";
+			labelPane.style.opacity = zoom >= MIN_ZOOM_LABELS ? "1" : "0";
 		}
 
 		updateVisibility();
@@ -51,6 +66,7 @@ export function LocationsLayer() {
 			mapRef.off("zoomend", updateVisibility);
 			mapRef.removeLayer(group);
 			pane.remove();
+			labelPane.remove();
 		};
 	}, [map, locations]);
 

@@ -195,9 +195,9 @@
 		"name": "Slanförråd 1",
 		"lng": 14.128550098551049,
 		"lat": 55.980534369644815,
-		"icon": "box",
+		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#64748b"
+		"color": "#a0522d"
 	},
 	{
 		"id": 21,
@@ -205,9 +205,9 @@
 		"name": "Slanförråd 2",
 		"lng": 14.135993637054094,
 		"lat": 55.979637872490969,
-		"icon": "box",
+		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#64748b"
+		"color": "#a0522d"
 	},
 	{
 		"id": 22,
@@ -215,9 +215,9 @@
 		"name": "Slanförråd 3",
 		"lng": 14.140291614519272,
 		"lat": 55.983234563341902,
-		"icon": "box",
+		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#64748b"
+		"color": "#a0522d"
 	},
 	{
 		"id": 23,
