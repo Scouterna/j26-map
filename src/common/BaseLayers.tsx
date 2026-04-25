@@ -1,9 +1,10 @@
+import { memo } from "preact/compat";
 import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
 import { MapPane } from "./layers/MapPane";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 
-export function BaseLayers() {
+export const BaseLayers = memo(function BaseLayers() {
 	return (
 		<>
 			<MapPane name="baseFill" zIndex={300} />
@@ -93,4 +94,4 @@ export function BaseLayers() {
 			/>
 		</>
 	);
-}
+});

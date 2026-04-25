@@ -9,7 +9,7 @@ const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
 
 const MAX_BOUNDS: [[number, number], [number, number]] = [
-	[55.971, 14.115],
+	[55.961, 14.115],
 	[55.992, 14.157],
 ];
 

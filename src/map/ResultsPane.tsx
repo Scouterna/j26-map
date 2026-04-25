@@ -8,6 +8,7 @@ initSearch();
 
 type Props = {
 	searchValue: string;
+	onResultClick: (result: SearchResult) => void;
 };
 
 function ResultIcon({ iconName, variant = "outline" }: { iconName: string; variant?: "outline" | "filled" }) {
@@ -73,7 +74,7 @@ function resultKey(result: SearchResult): string {
 	return `village-${result.villageNumber}`;
 }
 
-export function ResultsPane({ searchValue }: Props) {
+export function ResultsPane({ searchValue, onResultClick }: Props) {
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [loading, setLoading] = useState(false);
 
@@ -108,7 +109,7 @@ export function ResultsPane({ searchValue }: Props) {
 				<ul>
 					{results.map((result) => (
 						<li key={resultKey(result)}>
-							<ResultRow result={result} onClick={() => console.log("result clicked", result)} />
+							<ResultRow result={result} onClick={() => onResultClick(result)} />
 						</li>
 					))}
 				</ul>
