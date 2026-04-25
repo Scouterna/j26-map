@@ -1,3 +1,4 @@
+import type { IconVariant } from "./icons";
 import type { Location } from "./locationTypes";
 
 type RawLocation = {
@@ -6,12 +7,9 @@ type RawLocation = {
 	name: string;
 	lat: number;
 	lng: number;
-};
-
-const PLACEHOLDER_CATEGORY = {
-	iconName: "question-mark",
-	iconVariant: "outline" as const,
-	color: "#334155",
+	icon: string;
+	iconVariant: IconVariant;
+	color: string;
 };
 
 export async function getLocations(): Promise<Location[]> {
@@ -21,6 +19,10 @@ export async function getLocations(): Promise<Location[]> {
 		id: String(loc.id),
 		name: loc.name,
 		position: [loc.lat, loc.lng],
-		category: PLACEHOLDER_CATEGORY,
+		category: {
+			iconName: loc.icon,
+			iconVariant: loc.iconVariant,
+			color: loc.color,
+		},
 	}));
 }

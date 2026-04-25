@@ -50,7 +50,7 @@ export function MapCanvas({
 			renderer: svg({ padding: 1 }),
 			maxBounds: MAX_BOUNDS,
 			maxBoundsViscosity: 1,
-			doubleTapDragZoom: true,
+			doubleTapDragZoom: /android/i.test(navigator.userAgent),
 			doubleTapDragZoomOptions: {
 				reverse: true,
 			},
