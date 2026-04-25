@@ -11,9 +11,22 @@ type DistrictFeature = {
 };
 
 function centroid(coords: number[][]): PointTuple {
-	const lng = coords.reduce((s, c) => s + c[0], 0) / coords.length;
-	const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
-	return [lat, lng];
+	let area = 0;
+	let cx = 0;
+	let cy = 0;
+	const n = coords.length;
+	for (let i = 0; i < n; i++) {
+		const [x0, y0] = coords[i];
+		const [x1, y1] = coords[(i + 1) % n];
+		const cross = x0 * y1 - x1 * y0;
+		area += cross;
+		cx += (x0 + x1) * cross;
+		cy += (y0 + y1) * cross;
+	}
+	area /= 2;
+	cx /= 6 * area;
+	cy /= 6 * area;
+	return [cy, cx]; // [lat, lng]
 }
 
 function createLabelIcon(name: string, color = "#3d5a3e") {
