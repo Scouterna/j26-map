@@ -46,21 +46,21 @@ export function BaseLayers() {
 					fillOpacity: 0.5,
 					fill: true,
 				}}
-				svgPadding={0.5}
+				svgPadding={1}
 				pane="villages"
 			/>
 			<GeoJsonLayer
 				src="./layers/districts.geojson"
 				style={{ color: "transparent", weight: 0, fillOpacity: 0.2 }}
 				fillColorAttribute="color"
-				svgPadding={0.5}
+				svgPadding={1}
 				pane="districtsFill"
 			/>
 			<GeoJsonLayer
 				src="./layers/districts.geojson"
 				style={{ weight: 4, fillOpacity: 0, opacity: 0.6 }}
 				colorAttribute="color"
-				svgPadding={0.5}
+				svgPadding={1}
 				pane="districtsBorder"
 			/>
 			<GeoJsonLayer
@@ -69,7 +69,7 @@ export function BaseLayers() {
 				geoScale
 				weightAttribute="width"
 				weightOffset={2}
-				svgPadding={0.5}
+				svgPadding={1}
 				pane="roadsOutline"
 			/>
 			<GeoJsonLayer
@@ -77,7 +77,7 @@ export function BaseLayers() {
 				style={{ color: "#ffffff", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
-				svgPadding={0.5}
+				svgPadding={1}
 				pane="roadsFill"
 			/>
 			<GeoJsonLayer
