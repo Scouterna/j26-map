@@ -2,6 +2,7 @@ import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
 import ArrowLeftIcon from "@tabler/icons/outline/arrow-left.svg?raw";
 import SearchIcon from "@tabler/icons/outline/search.svg?raw";
 import { render } from "preact";
+import { memo } from "preact/compat";
 import { BaseLayers } from "../common/BaseLayers";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
 import { MapCanvas } from "../common/MapCanvas";
@@ -10,6 +11,15 @@ import "../style.css";
 import { AnimatePresence } from "motion/react";
 import { useState } from "preact/hooks";
 import { ResultsPane } from "./ResultsPane";
+
+const MapView = memo(function MapView() {
+	return (
+		<MapCanvas class="flex-1 z-10">
+			<BaseLayers />
+			<LocationsLayer />
+		</MapCanvas>
+	);
+});
 
 function MapApp() {
 	useAppBarTitle("Karta");
@@ -51,10 +61,7 @@ function MapApp() {
 				{searchActive && <ResultsPane searchValue={searchValue} />}
 			</AnimatePresence>
 
-			<MapCanvas class="flex-1 z-10">
-				<BaseLayers />
-				<LocationsLayer />
-			</MapCanvas>
+			<MapView />
 		</div>
 	);
 }
