@@ -147,7 +147,8 @@
 		"lat": 55.980732147929309,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 16,
@@ -197,7 +198,8 @@
 		"lat": 55.980534369644815,
 		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#a0522d"
+		"color": "#a0522d",
+		"tags": ["slanforrad"]
 	},
 	{
 		"id": 21,
@@ -207,7 +209,8 @@
 		"lat": 55.979637872490969,
 		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#a0522d"
+		"color": "#a0522d",
+		"tags": ["slanforrad"]
 	},
 	{
 		"id": 22,
@@ -217,7 +220,8 @@
 		"lat": 55.983234563341902,
 		"icon": "menu",
 		"iconVariant": "outline",
-		"color": "#a0522d"
+		"color": "#a0522d",
+		"tags": ["slanforrad"]
 	},
 	{
 		"id": 23,
@@ -227,7 +231,8 @@
 		"lat": 55.980770386964956,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 24,
@@ -237,7 +242,8 @@
 		"lat": 55.980856319054034,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 25,
@@ -247,7 +253,8 @@
 		"lat": 55.980940122177778,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 26,
@@ -257,7 +264,8 @@
 		"lat": 55.980613428196236,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 27,
@@ -267,7 +275,8 @@
 		"lat": 55.978714812010274,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 28,
@@ -277,7 +286,8 @@
 		"lat": 55.977169236991962,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 29,
@@ -287,7 +297,8 @@
 		"lat": 55.978761232411124,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 30,
@@ -297,7 +308,8 @@
 		"lat": 55.978747744779049,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 31,
@@ -307,7 +319,8 @@
 		"lat": 55.980867456909849,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 32,
@@ -317,7 +330,8 @@
 		"lat": 55.980820173391912,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 33,
@@ -327,7 +341,8 @@
 		"lat": 55.98076739129877,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	},
 	{
 		"id": 34,
@@ -337,6 +352,7 @@
 		"lat": 55.980719494207698,
 		"icon": "toilet-paper",
 		"iconVariant": "outline",
-		"color": "#0369a1"
+		"color": "#0369a1",
+		"tags": ["wc"]
 	}
 ]

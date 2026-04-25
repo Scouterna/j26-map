@@ -12,4 +12,5 @@ export type Location = {
 	name: string;
 	position: PointTuple;
 	category: Category;
+	tags: string[];
 };

@@ -10,6 +10,7 @@ type RawLocation = {
 	icon: string;
 	iconVariant: IconVariant;
 	color: string;
+	tags?: string[];
 };
 
 export async function getLocations(): Promise<Location[]> {
@@ -24,5 +25,6 @@ export async function getLocations(): Promise<Location[]> {
 			iconVariant: loc.iconVariant,
 			color: loc.color,
 		},
+		tags: loc.tags ?? [],
 	}));
 }
