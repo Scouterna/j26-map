@@ -122,7 +122,10 @@ export function MapCanvas({
 			);
 		}
 
-		containerRef.current.style.setProperty("--map-zoom-anim", String(m.getZoom()));
+		containerRef.current.style.setProperty(
+			"--map-zoom-anim",
+			String(m.getZoom()),
+		);
 		m.on("zoomanim", onZoomAnimStart);
 		m.on("zoomend", onZoomAnimEnd);
 

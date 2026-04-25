@@ -1,26 +1,57 @@
+import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
+import ArrowLeftIcon from "@tabler/icons/outline/arrow-left.svg?raw";
+import SearchIcon from "@tabler/icons/outline/search.svg?raw";
 import { render } from "preact";
 import { BaseLayers } from "../common/BaseLayers";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
 import { MapCanvas } from "../common/MapCanvas";
 import { useAppBarTitle } from "../common/use-app-bar-title";
 import "../style.css";
-import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
-import XIcon from "@tabler/icons/outline/x.svg?raw";
+import { AnimatePresence } from "motion/react";
+import { useState } from "preact/hooks";
+import { ResultsPane } from "./ResultsPane";
 
 function MapApp() {
 	useAppBarTitle("Karta");
 
+	const [searchActive, setSearchActive] = useState(false);
+	const [searchValue, setSearchValue] = useState("");
+
 	return (
 		<div class="w-screen h-dvh flex flex-col">
-			<div class="p-2 flex gap-2 items-center bg-white border-b border-gray-200 shadow-md">
+			<div
+				class={`
+					p-2 flex items-center bg-white border-b border-gray-200 shadow-md z-40
+					${searchActive ? "shadow-none border-transparent" : ""}
+				`}
+			>
+				<ScoutButton
+					variant="text"
+					icon={ArrowLeftIcon}
+					iconOnly
+					className={`
+						-ml-1 mr-1 transition-[width] w-0
+						${searchActive ? "w-11" : ""}
+					`}
+					onClick={() => setSearchActive(false)}
+				>
+					Tillbaka
+				</ScoutButton>
 				<ScoutInput
-					class="flex-1"
-					placeholder="Söker efter platser, områden, aktiviteter..."
+					className="flex-1"
+					placeholder="Sök efter platser, områden, kårer..."
+					icon={SearchIcon}
+					clearable
+					onFocus={() => setSearchActive(true)}
+					onScoutInputChange={(e) => setSearchValue(e.detail.value)}
 				/>
-				<ScoutButton variant="text" icon={XIcon} iconOnly />
 			</div>
 
-			<MapCanvas class="flex-1">
+			<AnimatePresence>
+				{searchActive && <ResultsPane searchValue={searchValue} />}
+			</AnimatePresence>
+
+			<MapCanvas class="flex-1 z-10">
 				<BaseLayers />
 				<LocationsLayer />
 			</MapCanvas>
