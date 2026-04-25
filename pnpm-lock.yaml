@@ -32,12 +32,6 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
-      leaflet-doubletapdrag:
-        specifier: ^0.1.2
-        version: 0.1.2(leaflet@1.9.4)
-      leaflet-doubletapdragzoom:
-        specifier: ^0.3.2
-        version: 0.3.2(leaflet@1.9.4)
       leaflet-edgebuffer:
         specifier: ^1.0.7
         version: 1.0.7
@@ -996,16 +990,6 @@ packages:
 
   kolorist@1.8.0:
     resolution: {integrity: sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ==}
-
-  leaflet-doubletapdrag@0.1.2:
-    resolution: {integrity: sha512-YE7fyTrAAMxy+tX4VxqM14TuSvLPaiXzmYGCQnp3D1phmCg7AEe6KZqgQa/gJ8w5oocG1RTSNMQDlMIDAwmCWA==}
-    peerDependencies:
-      leaflet: ^1.0.0
-
-  leaflet-doubletapdragzoom@0.3.2:
-    resolution: {integrity: sha512-zwW9sWR2V8q0y5xFYvK8guKpHHZ9XDYAvVsyL78QmaCLkAeMpZwgV/yAMG9rRleF+k9zjVWQp/C5tu2OhkGnFw==}
-    peerDependencies:
-      leaflet: ^1.0.0
 
   leaflet-edgebuffer@1.0.7:
     resolution: {integrity: sha512-ayapUPbKJPTCNr50xYtYGJRfXTLIqs60goyHxCV3XREMqV4Ima8R3GUCKU/UIxzLPc+Be8U6yuxKqkBFoHE0Rw==}
@@ -2146,15 +2130,6 @@ snapshots:
   json5@2.2.3: {}
 
   kolorist@1.8.0: {}
-
-  leaflet-doubletapdrag@0.1.2(leaflet@1.9.4):
-    dependencies:
-      leaflet: 1.9.4
-
-  leaflet-doubletapdragzoom@0.3.2(leaflet@1.9.4):
-    dependencies:
-      leaflet: 1.9.4
-      leaflet-doubletapdrag: 0.1.2(leaflet@1.9.4)
 
   leaflet-edgebuffer@1.0.7: {}
 

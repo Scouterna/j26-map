@@ -4,8 +4,6 @@ import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import "leaflet/dist/leaflet.css";
 import "leaflet-edgebuffer";
-import "leaflet-doubletapdrag";
-import "leaflet-doubletapdragzoom";
 
 const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
@@ -50,10 +48,6 @@ export function MapCanvas({
 			renderer: svg({ padding: 1 }),
 			maxBounds: MAX_BOUNDS,
 			maxBoundsViscosity: 1,
-			doubleTapDragZoom: /android/i.test(navigator.userAgent),
-			doubleTapDragZoomOptions: {
-				reverse: true,
-			},
 		});
 
 		new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
