@@ -1,4 +1,4 @@
-import { LayerGroup, Marker } from "leaflet";
+import { LayerGroup, Marker, type ZoomAnimEvent } from "leaflet";
 import { useEffect, useState } from "preact/hooks";
 import { getIconURL } from "../icons";
 import { getLocations } from "../locationService";
@@ -52,18 +52,28 @@ export function LocationsLayer() {
 			}),
 		);
 
-		function updateVisibility() {
-			const zoom = mapRef.getZoom();
+		function setVisibility(zoom: number) {
 			pane.style.opacity = zoom >= MIN_ZOOM ? "1" : "0";
 			labelPane.style.opacity = zoom >= MIN_ZOOM_LABELS ? "1" : "0";
 		}
 
-		updateVisibility();
-		mapRef.on("zoomend", updateVisibility);
+		function onZoomAnim(e: ZoomAnimEvent) {
+			if (e.zoom < MIN_ZOOM) pane.style.opacity = "0";
+			if (e.zoom < MIN_ZOOM_LABELS) labelPane.style.opacity = "0";
+		}
+
+		function onZoomEnd() {
+			setVisibility(mapRef.getZoom());
+		}
+
+		setVisibility(mapRef.getZoom());
+		mapRef.on("zoomanim", onZoomAnim);
+		mapRef.on("zoomend", onZoomEnd);
 		mapRef.addLayer(group);
 
 		return () => {
-			mapRef.off("zoomend", updateVisibility);
+			mapRef.off("zoomanim", onZoomAnim);
+			mapRef.off("zoomend", onZoomEnd);
 			mapRef.removeLayer(group);
 			pane.remove();
 			labelPane.remove();

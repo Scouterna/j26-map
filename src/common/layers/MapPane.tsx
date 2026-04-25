@@ -1,3 +1,4 @@
+import type { ZoomAnimEvent } from "leaflet";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -8,9 +9,11 @@ type Props = {
 	hideAtZoom?: number;
 	/** Fade in when zoom reaches this level */
 	showAtZoom?: number;
+	/** Fade in and out at the start of zoom instead of waiting for zoomend to fade in */
+	eagerFade?: boolean;
 };
 
-export function MapPane({ name, zIndex, hideAtZoom, showAtZoom }: Props) {
+export function MapPane({ name, zIndex, hideAtZoom, showAtZoom, eagerFade }: Props) {
 	const map = useMap();
 
 	useEffect(() => {
@@ -22,19 +25,35 @@ export function MapPane({ name, zIndex, hideAtZoom, showAtZoom }: Props) {
 		if (hideAtZoom !== undefined || showAtZoom !== undefined) {
 			pane.style.transition = "opacity 250ms";
 
-			function updateOpacity() {
-				const zoom = mapRef.getZoom();
+			function setOpacity(zoom: number) {
 				const hidden =
 					(hideAtZoom !== undefined && zoom >= hideAtZoom) ||
 					(showAtZoom !== undefined && zoom < showAtZoom);
 				pane.style.opacity = hidden ? "0" : "1";
 			}
 
-			updateOpacity();
-			mapRef.on("zoomend", updateOpacity);
+			function onZoomAnim(e: ZoomAnimEvent) {
+				if (eagerFade) {
+					setOpacity(e.zoom);
+				} else {
+					const hidden =
+						(hideAtZoom !== undefined && e.zoom >= hideAtZoom) ||
+						(showAtZoom !== undefined && e.zoom < showAtZoom);
+					if (hidden) pane.style.opacity = "0";
+				}
+			}
+
+			function onZoomEnd() {
+				setOpacity(mapRef.getZoom());
+			}
+
+			setOpacity(mapRef.getZoom());
+			mapRef.on("zoomanim", onZoomAnim);
+			mapRef.on("zoomend", onZoomEnd);
 
 			return () => {
-				mapRef.off("zoomend", updateOpacity);
+				mapRef.off("zoomanim", onZoomAnim);
+				mapRef.off("zoomend", onZoomEnd);
 				pane.remove();
 			};
 		}
@@ -42,7 +61,7 @@ export function MapPane({ name, zIndex, hideAtZoom, showAtZoom }: Props) {
 		return () => {
 			pane.remove();
 		};
-	}, [map, name, zIndex, hideAtZoom, showAtZoom]);
+	}, [map, name, zIndex, hideAtZoom, showAtZoom, eagerFade]);
 
 	return null;
 }

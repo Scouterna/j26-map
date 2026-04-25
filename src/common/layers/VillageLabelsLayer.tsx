@@ -1,4 +1,4 @@
-import { DivIcon, LayerGroup, Marker, type PointTuple } from "leaflet";
+import { DivIcon, LayerGroup, Marker, type PointTuple, type ZoomAnimEvent } from "leaflet";
 import { useEffect, useState } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -69,15 +69,25 @@ export function VillageLabelsLayer() {
 			),
 		);
 
-		function updateOpacity() {
-			pane.style.opacity = mapRef.getZoom() >= SHOW_AT_ZOOM ? "1" : "0";
+		function setOpacity(zoom: number) {
+			pane.style.opacity = zoom >= SHOW_AT_ZOOM ? "1" : "0";
 		}
 
-		mapRef.on("zoomend", updateOpacity);
+		function onZoomAnim(e: ZoomAnimEvent) {
+			if (e.zoom < SHOW_AT_ZOOM) pane.style.opacity = "0";
+		}
+
+		function onZoomEnd() {
+			setOpacity(mapRef.getZoom());
+		}
+
+		mapRef.on("zoomanim", onZoomAnim);
+		mapRef.on("zoomend", onZoomEnd);
 		mapRef.addLayer(group);
 
 		return () => {
-			mapRef.off("zoomend", updateOpacity);
+			mapRef.off("zoomanim", onZoomAnim);
+			mapRef.off("zoomend", onZoomEnd);
 			mapRef.removeLayer(group);
 			pane.remove();
 		};

@@ -1,4 +1,4 @@
-import { DivIcon, LayerGroup, Marker, type PointTuple } from "leaflet";
+import { DivIcon, LayerGroup, Marker, type PointTuple, type ZoomAnimEvent } from "leaflet";
 import { useEffect, useState } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
@@ -95,16 +95,26 @@ export function AreaLabelsLayer() {
 			),
 		);
 
-		function updateOpacity() {
-			pane.style.opacity = mapRef.getZoom() >= HIDE_AT_ZOOM ? "0" : "1";
+		function setOpacity(zoom: number) {
+			pane.style.opacity = zoom >= HIDE_AT_ZOOM ? "0" : "1";
 		}
 
-		updateOpacity();
-		mapRef.on("zoomend", updateOpacity);
+		function onZoomAnim(e: ZoomAnimEvent) {
+			setOpacity(e.zoom);
+		}
+
+		function onZoomEnd() {
+			setOpacity(mapRef.getZoom());
+		}
+
+		setOpacity(mapRef.getZoom());
+		mapRef.on("zoomanim", onZoomAnim);
+		mapRef.on("zoomend", onZoomEnd);
 		mapRef.addLayer(group);
 
 		return () => {
-			mapRef.off("zoomend", updateOpacity);
+			mapRef.off("zoomanim", onZoomAnim);
+			mapRef.off("zoomend", onZoomEnd);
 			mapRef.removeLayer(group);
 			pane.remove();
 		};

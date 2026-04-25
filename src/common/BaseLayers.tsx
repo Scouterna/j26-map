@@ -8,7 +8,7 @@ export function BaseLayers() {
 		<>
 			<MapPane name="baseFill" zIndex={300} />
 			<MapPane name="villages" zIndex={320} />
-			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} />
+			<MapPane name="districtsFill" zIndex={350} hideAtZoom={18} eagerFade />
 			<MapPane name="districtsBorder" zIndex={360} />
 			<MapPane name="roadsOutline" zIndex={420} />
 			<MapPane name="roadsFill" zIndex={421} />
