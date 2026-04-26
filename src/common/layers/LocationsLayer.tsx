@@ -89,13 +89,16 @@ export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
 			paneRef.current.style.opacity = "1";
 			labelPaneRef.current.style.opacity = "1";
 			for (const [id, marker] of markersRef.current) {
-				marker.setOpacity(visibleIds.has(id) ? 1 : 0);
+				const visible = visibleIds.has(id);
+				marker.setOpacity(visible ? 1 : 0);
+				marker.getTooltip()?.setOpacity(visible ? 1 : 0);
 			}
 		} else {
 			paneRef.current.style.opacity = ZOOM_OPACITY;
 			labelPaneRef.current.style.opacity = ZOOM_OPACITY_LABELS;
 			for (const marker of markersRef.current.values()) {
 				marker.setOpacity(1);
+				marker.getTooltip()?.setOpacity(1);
 			}
 		}
 	}, [visibleIds]);
