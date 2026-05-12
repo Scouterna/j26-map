@@ -7,6 +7,7 @@ import { memo } from "preact/compat";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
+import { UserLocationLayer } from "../common/layers/UserLocationLayer";
 import type { Location } from "../common/locationTypes";
 import { MapCanvas } from "../common/MapCanvas";
 import type { SearchResult } from "../common/searchTypes";
@@ -42,6 +43,7 @@ const MapView = memo(function MapView({
 				onLocationClick={onLocationClick}
 				visibleIds={visibleIds}
 			/>
+			<UserLocationLayer />
 			<MapInteraction
 				selectedResult={selectedResult}
 				getSheetHeight={getSheetHeight}
