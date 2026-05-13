@@ -14,7 +14,7 @@ export function UserLocationLayer() {
 
 		const id = navigator.geolocation.watchPosition(
 			(pos) => setPosition(pos),
-			() => {},
+			(err) => console.warn("Geolocation error:", err.message),
 			{ enableHighAccuracy: true },
 		);
 
