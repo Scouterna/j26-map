@@ -56,7 +56,7 @@ export function MapCanvas({
 						attribution:
 							'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 						minzoom: 10,
-						maxzoom: 20,
+						maxzoom: 19,
 					},
 				},
 				layers: [{ id: "osm-tiles", type: "raster", source: "osm" }],
