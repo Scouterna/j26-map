@@ -12,7 +12,7 @@ const EMPTY_FC = { type: "FeatureCollection" as const, features: [] };
 type LayerStyle = {
 	color?: string;
 	weight?: number;
-	opacity?: number;
+	opacity?: number | ExpressionSpecification;
 	fillColor?: string;
 	fillOpacity?: number | ExpressionSpecification;
 	lineCap?: "butt" | "round" | "square";

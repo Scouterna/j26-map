@@ -37,8 +37,13 @@ body {
 }
 
 .j26-zoom-hide-16 {
-	/* Linear fade over zoom 15.5→16, matching the districts-fill interpolation range */
+	/* Linear fade over zoom 15.5→16 */
 	opacity: clamp(0, calc((16 - var(--map-zoom-anim)) * 2), 1);
+}
+
+.j26-zoom-hide-16-5 {
+	/* Linear fade over zoom 16→16.5 */
+	opacity: clamp(0, calc((16.5 - var(--map-zoom-anim)) * 2), 1);
 }
 
 .j26-zoom-hide-18 {

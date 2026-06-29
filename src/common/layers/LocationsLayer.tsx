@@ -10,7 +10,7 @@ import { createMarkerElement } from "../marker";
 // MapLibre's _updateOpacity calls `el.style.opacity = "1"` on every move event, overriding
 // anything set on the MapLibre marker element. We wrap content in an inner div: MapLibre owns
 // the outer wrapper (opacity always 1), our class controls the inner element's opacity.
-const PIN_CLASS = "j26-zoom-show-16";
+const PIN_CLASS = "j26-zoom-show-16-5";
 const LABEL_CLASS = "j26-zoom-show-17";
 
 const MARKER_SIZE = 32;

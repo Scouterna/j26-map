@@ -45,7 +45,7 @@ export const BaseLayers = memo(function BaseLayers() {
 				style={{
 					color: "transparent",
 					weight: 0,
-					fillOpacity: ["interpolate", ["linear"], ["zoom"], 15.5, 0.2, 16, 0],
+					fillOpacity: ["interpolate", ["linear"], ["zoom"], 16, 0.2, 16.5, 0],
 				}}
 				fillColorAttribute="color"
 			/>

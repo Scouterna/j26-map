@@ -36,7 +36,7 @@ function createLabelElement(name: string, color = "#3d5a3e"): HTMLElement {
 	const el = document.createElement("div");
 	// j26-zoom-hide-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
 	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
-	el.className = "j26-zoom-hide-16";
+	el.className = "j26-zoom-hide-16-5";
 	el.style.cssText = `
 		font-size: calc(18px * pow(2, (min(var(--map-zoom-anim), 17) - 16) * 0.4));
 		font-weight: 600;
