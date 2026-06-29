@@ -10,7 +10,7 @@ const pinSvg = pinRaw
 
 export function createMarkerElement(color: string, iconUrl?: string, size = MARKER_SIZE): HTMLElement {
 	const iconOverlay = iconUrl
-		? `<div style="position:absolute;top:${ICON_INSET_TOP_PCT}%;left:50%;transform:translate(-50%,-50%);width:${ICON_CONTENT_PCT}%;aspect-ratio:1;background:white;mask-image:url('${iconUrl}');mask-repeat:no-repeat;mask-size:contain;mask-position:center"></div>`
+		? `<div style="position:absolute;top:${ICON_INSET_TOP_PCT}%;left:50%;transform:translate(-50%,-50%);width:${ICON_CONTENT_PCT}%;aspect-ratio:1;background:white;-webkit-mask-image:url('${iconUrl}');-webkit-mask-repeat:no-repeat;-webkit-mask-size:contain;-webkit-mask-position:center;mask-image:url('${iconUrl}');mask-repeat:no-repeat;mask-size:contain;mask-position:center"></div>`
 		: "";
 
 	const el = document.createElement("div");
