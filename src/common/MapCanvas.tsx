@@ -65,6 +65,8 @@ export function MapCanvas({
 			zoom,
 			maxBounds: MAX_BOUNDS,
 			...(interactive && { minZoom: 14, maxZoom: 19 }),
+			dragRotate: false,
+			touchPitch: false,
 		});
 
 		if (interactive) {
