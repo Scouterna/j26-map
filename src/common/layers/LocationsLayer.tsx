@@ -28,9 +28,10 @@ type Props = {
 	onLocationClick?: (loc: Location) => void;
 	visibleIds?: Set<string> | null;
 	activeId?: string | null;
+	forceVisibleIds?: Set<string> | null;
 };
 
-export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = null }: Props) {
+export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = null, forceVisibleIds = null }: Props) {
 	const map = useMap();
 	const [locations, setLocations] = useState<Location[]>([]);
 	const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
@@ -98,15 +99,24 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 		};
 	}, [map, locations, onLocationClick]);
 
-	// Highlight the active pin.
+	// Highlight the active pin and keep force-visible pins visible regardless of zoom.
 	useEffect(() => {
 		const entries = markersRef.current;
-		for (const [id, { pinInner, outer }] of entries) {
+		for (const [id, { pinInner, labelInner, outer }] of entries) {
 			const isActive = id === activeId;
+			const forceVisible = forceVisibleIds?.has(id) ?? false;
 			pinInner.classList.toggle("j26-marker-active", isActive);
 			outer.style.zIndex = isActive ? "1" : "";
+			// Inline opacity overrides the zoom-based CSS class opacity.
+			if (isActive || forceVisible) {
+				pinInner.style.opacity = "1";
+				labelInner.style.opacity = "1";
+			} else {
+				pinInner.style.removeProperty("opacity");
+				labelInner.style.removeProperty("opacity");
+			}
 		}
-	}, [activeId]);
+	}, [activeId, forceVisibleIds]);
 
 	// Override per-marker visibility and interactivity when visibleIds is set.
 	useEffect(() => {

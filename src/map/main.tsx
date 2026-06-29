@@ -38,6 +38,7 @@ const MapView = memo(function MapView({
 			<LocationsLayer
 				onLocationClick={onLocationClick}
 				activeId={selectedResult?.type === "location" ? selectedResult.location.id : null}
+				forceVisibleIds={selectedResult?.type === "group" ? new Set(selectedResult.locations.map((l) => l.id)) : null}
 			/>
 			<UserLocationLayer />
 			<MapInteraction

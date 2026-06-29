@@ -144,6 +144,13 @@ export function initSearch(): void {
 	getIndex();
 }
 
+export async function getGroups(): Promise<Array<{ tag: string; displayName: string }>> {
+	const index = await getIndex();
+	return Array.from(index.resultMap.entries())
+		.filter((e): e is [string, Extract<SearchResult, { type: "group" }>] => e[1].type === "group")
+		.map(([, r]) => ({ tag: r.tag, displayName: r.displayName }));
+}
+
 export async function search(query: string): Promise<SearchResult[]> {
 	if (!query.trim()) return [];
 
