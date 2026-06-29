@@ -186,7 +186,7 @@ export function GeoJsonLayer({
 		const lineId = `${id}-line`;
 
 		const needsFill =
-			(style?.fillOpacity ?? 0) > 0 || !!fillColorAttribute || !!patternDef;
+			(style?.fillOpacity != null && style.fillOpacity !== 0) || !!fillColorAttribute || !!patternDef;
 		const needsLine =
 			style?.color !== "transparent" &&
 			(style?.weight === undefined || style.weight > 0);

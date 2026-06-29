@@ -41,11 +41,21 @@ function featureBounds(
 type Props = {
 	selectedResult: SearchResult | null;
 	getSheetHeight: () => number;
+	onMapClick?: () => void;
 };
 
-export function MapInteraction({ selectedResult, getSheetHeight }: Props) {
+export function MapInteraction({ selectedResult, getSheetHeight, onMapClick }: Props) {
 	const map = useMap();
 	const highlightRef = useRef(false);
+	const onMapClickRef = useRef(onMapClick);
+	onMapClickRef.current = onMapClick;
+
+	useEffect(() => {
+		if (!map || !onMapClick) return;
+		const handler = () => onMapClickRef.current?.();
+		map.on("click", handler);
+		return () => map.off("click", handler);
+	}, [map, !!onMapClick]);
 
 	useEffect(() => {
 		if (!map) return;
@@ -68,11 +78,12 @@ export function MapInteraction({ selectedResult, getSheetHeight }: Props) {
 		};
 
 		if (selectedResult.type === "location") {
-			map.flyTo({
+			map.easeTo({
 				center: toLngLat(selectedResult.location.position),
 				zoom: 18,
-				// Negative Y shifts target above viewport center so pin is centered above the sheet
 				offset: [0, -(sheetH / 2)] as [number, number],
+				duration: 500,
+				easing: (t) => 1 - Math.pow(1 - t, 3),
 			});
 		} else if (selectedResult.type === "group") {
 			const positions = selectedResult.locations.map((l) => l.position);

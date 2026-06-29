@@ -1,9 +1,8 @@
 import type { IconVariant } from "./icons";
-import type { Location } from "./locationTypes";
+import type { Aktivitet, Location, OpeningHourSlot } from "./locationTypes";
 
 type RawLocation = {
 	id: number;
-	slug: string;
 	name: string;
 	lat: number;
 	lng: number;
@@ -11,6 +10,8 @@ type RawLocation = {
 	iconVariant: IconVariant;
 	color: string;
 	tags?: string[];
+	openingHours?: Record<string, OpeningHourSlot[]>;
+	aktiviteter?: Record<string, Aktivitet[]>;
 };
 
 export async function getLocations(): Promise<Location[]> {
@@ -26,5 +27,7 @@ export async function getLocations(): Promise<Location[]> {
 			color: loc.color,
 		},
 		tags: loc.tags ?? [],
+		openingHours: loc.openingHours,
+		aktiviteter: loc.aktiviteter,
 	}));
 }

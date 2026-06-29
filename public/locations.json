@@ -7,7 +7,65 @@
 		"lat": 55.979798511431689,
 		"icon": "info-circle",
 		"iconVariant": "filled",
-		"color": "#2563eb"
+		"color": "#2563eb",
+		"openingHours": {
+			"2026-06-29": [
+				{ "from": "09:00", "to": "12:00" },
+				{ "from": "13:00", "to": "18:00" }
+			],
+			"2026-07-25": [
+				{ "from": "09:00", "to": "12:00" },
+				{ "from": "13:00", "to": "18:00" }
+			]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "1-1",
+					"name": "Daglig briefing",
+					"from": "09:00",
+					"to": "09:30",
+					"description": "Genomgång av dagens program och viktig info."
+				},
+				{
+					"id": "1-2",
+					"name": "Lunch-info",
+					"from": "12:00",
+					"to": "12:20",
+					"description": "Uppdateringar och meddelanden."
+				},
+				{
+					"id": "1-3",
+					"name": "Eftermiddagsinfo",
+					"from": "16:00",
+					"to": "16:30",
+					"description": "Sammanfattning och info om kvällen."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "1-4",
+					"name": "Daglig briefing",
+					"from": "09:00",
+					"to": "09:30",
+					"description": "Genomgång av dagens program och viktig info."
+				},
+				{
+					"id": "1-5",
+					"name": "Lunch-info",
+					"from": "12:00",
+					"to": "12:20",
+					"description": "Uppdateringar och meddelanden."
+				},
+				{
+					"id": "1-6",
+					"name": "Eftermiddagsinfo",
+					"from": "16:00",
+					"to": "16:30",
+					"description": "Sammanfattning och info om kvällen."
+				}
+			]
+		}
 	},
 	{
 		"id": 2,
@@ -17,7 +75,17 @@
 		"lat": 55.979815497779612,
 		"icon": "ear",
 		"iconVariant": "outline",
-		"color": "#0891b2"
+		"color": "#0891b2",
+		"openingHours": {
+			"2026-06-29": [
+				{ "from": "10:00", "to": "12:00" },
+				{ "from": "14:00", "to": "20:00" }
+			],
+			"2026-07-25": [
+				{ "from": "10:00", "to": "12:00" },
+				{ "from": "14:00", "to": "20:00" }
+			]
+		}
 	},
 	{
 		"id": 3,
@@ -27,7 +95,11 @@
 		"lat": 55.979693174712395,
 		"icon": "books",
 		"iconVariant": "outline",
-		"color": "#92400e"
+		"color": "#92400e",
+		"openingHours": {
+			"2026-06-29": [{ "from": "10:00", "to": "18:00" }],
+			"2026-07-25": [{ "from": "10:00", "to": "18:00" }]
+		}
 	},
 	{
 		"id": 4,
@@ -37,7 +109,11 @@
 		"lat": 55.979729798031698,
 		"icon": "flame",
 		"iconVariant": "outline",
-		"color": "#7c3aed"
+		"color": "#7c3aed",
+		"openingHours": {
+			"2026-06-29": [{ "from": "08:00", "to": "22:00" }],
+			"2026-07-25": [{ "from": "08:00", "to": "22:00" }]
+		}
 	},
 	{
 		"id": 5,
@@ -47,7 +123,73 @@
 		"lat": 55.97974588243288,
 		"icon": "presentation",
 		"iconVariant": "outline",
-		"color": "#4f46e5"
+		"color": "#4f46e5",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "17:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "17:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "5-1",
+					"name": "Scouting for Food – global utmaning",
+					"from": "09:30",
+					"to": "10:30",
+					"description": "Om Scouternas matinsamlingar och deras globala påverkan."
+				},
+				{
+					"id": "5-2",
+					"name": "Klimatförändringar och friluftsliv",
+					"from": "11:00",
+					"to": "12:00",
+					"description": "Hur påverkar klimatförändringarna vår natur och våra läger?"
+				},
+				{
+					"id": "5-3",
+					"name": "Ledarskapsutveckling i scoutrörelsens anda",
+					"from": "14:00",
+					"to": "15:00",
+					"description": "Praktiska verktyg för unga ledare."
+				},
+				{
+					"id": "5-4",
+					"name": "Lägerliv och hållbarhet",
+					"from": "15:30",
+					"to": "16:30",
+					"description": "Hur vi gör våra läger mer miljövänliga."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "5-5",
+					"name": "Scouting for Food – global utmaning",
+					"from": "09:30",
+					"to": "10:30",
+					"description": "Om Scouternas matinsamlingar och deras globala påverkan."
+				},
+				{
+					"id": "5-6",
+					"name": "Klimatförändringar och friluftsliv",
+					"from": "11:00",
+					"to": "12:00",
+					"description": "Hur påverkar klimatförändringarna vår natur och våra läger?"
+				},
+				{
+					"id": "5-7",
+					"name": "Ledarskapsutveckling i scoutrörelsens anda",
+					"from": "14:00",
+					"to": "15:00",
+					"description": "Praktiska verktyg för unga ledare."
+				},
+				{
+					"id": "5-8",
+					"name": "Lägerliv och hållbarhet",
+					"from": "15:30",
+					"to": "16:30",
+					"description": "Hur vi gör våra läger mer miljövänliga."
+				}
+			]
+		}
 	},
 	{
 		"id": 6,
@@ -57,7 +199,11 @@
 		"lat": 55.979524014078862,
 		"icon": "coffee",
 		"iconVariant": "outline",
-		"color": "#c2410c"
+		"color": "#c2410c",
+		"openingHours": {
+			"2026-06-29": [{ "from": "08:00", "to": "22:00" }],
+			"2026-07-25": [{ "from": "08:00", "to": "22:00" }]
+		}
 	},
 	{
 		"id": 7,
@@ -67,7 +213,45 @@
 		"lat": 55.979242507178213,
 		"icon": "music",
 		"iconVariant": "outline",
-		"color": "#db2777"
+		"color": "#db2777",
+		"openingHours": {
+			"2026-06-29": [{ "from": "18:00", "to": "23:00" }],
+			"2026-07-25": [{ "from": "18:00", "to": "23:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "7-1",
+					"name": "Kvällsdans med DJ",
+					"from": "19:00",
+					"to": "21:00",
+					"description": "Dansa loss till topplistans hits med vår DJ!"
+				},
+				{
+					"id": "7-2",
+					"name": "Liveband: The Scouts",
+					"from": "21:30",
+					"to": "23:00",
+					"description": "Livemusik med scoutbandets favoriter."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "7-3",
+					"name": "Kvällsdans med DJ",
+					"from": "19:00",
+					"to": "21:00",
+					"description": "Dansa loss till topplistans hits med vår DJ!"
+				},
+				{
+					"id": "7-4",
+					"name": "Liveband: The Scouts",
+					"from": "21:30",
+					"to": "23:00",
+					"description": "Livemusik med scoutbandets favoriter."
+				}
+			]
+		}
 	},
 	{
 		"id": 8,
@@ -77,7 +261,59 @@
 		"lat": 55.979035905337426,
 		"icon": "device-gamepad-2",
 		"iconVariant": "outline",
-		"color": "#16a34a"
+		"color": "#16a34a",
+		"openingHours": {
+			"2026-06-29": [{ "from": "10:00", "to": "22:00" }],
+			"2026-07-25": [{ "from": "10:00", "to": "22:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "8-1",
+					"name": "Turneringsstart – Mario Kart",
+					"from": "10:00",
+					"to": "11:30",
+					"description": "Anmäl dig och tävla!"
+				},
+				{
+					"id": "8-2",
+					"name": "Öppen speltid",
+					"from": "13:00",
+					"to": "17:00",
+					"description": "Kom och spela brädspel, kortspel och TV-spel."
+				},
+				{
+					"id": "8-3",
+					"name": "Final – brädspelsturnering",
+					"from": "18:00",
+					"to": "20:00",
+					"description": "Finalmatcher i veckans brädspelsturnering."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "8-4",
+					"name": "Turneringsstart – Mario Kart",
+					"from": "10:00",
+					"to": "11:30",
+					"description": "Anmäl dig och tävla!"
+				},
+				{
+					"id": "8-5",
+					"name": "Öppen speltid",
+					"from": "13:00",
+					"to": "17:00",
+					"description": "Kom och spela brädspel, kortspel och TV-spel."
+				},
+				{
+					"id": "8-6",
+					"name": "Final – brädspelsturnering",
+					"from": "18:00",
+					"to": "20:00",
+					"description": "Finalmatcher i veckans brädspelsturnering."
+				}
+			]
+		}
 	},
 	{
 		"id": 9,
@@ -87,7 +323,11 @@
 		"lat": 55.979200649776246,
 		"icon": "beer",
 		"iconVariant": "outline",
-		"color": "#d97706"
+		"color": "#d97706",
+		"openingHours": {
+			"2026-06-29": [{ "from": "11:00", "to": "23:00" }],
+			"2026-07-25": [{ "from": "11:00", "to": "23:00" }]
+		}
 	},
 	{
 		"id": 10,
@@ -97,7 +337,59 @@
 		"lat": 55.979626496970241,
 		"icon": "radio",
 		"iconVariant": "outline",
-		"color": "#dc2626"
+		"color": "#dc2626",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "21:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "21:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "10-1",
+					"name": "Livesändning: Morgon-radio",
+					"from": "09:00",
+					"to": "10:00",
+					"description": "Scouternas egna radioprogram – delta som gäst!"
+				},
+				{
+					"id": "10-2",
+					"name": "Gör din egen podd",
+					"from": "13:00",
+					"to": "14:30",
+					"description": "Workshop i podcastproduktion för nybörjare."
+				},
+				{
+					"id": "10-3",
+					"name": "Livesändning: Kvällsrapport",
+					"from": "19:00",
+					"to": "20:00",
+					"description": "Dagens höjdpunkter från Jamboree 26."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "10-4",
+					"name": "Livesändning: Morgon-radio",
+					"from": "09:00",
+					"to": "10:00",
+					"description": "Scouternas egna radioprogram – delta som gäst!"
+				},
+				{
+					"id": "10-5",
+					"name": "Gör din egen podd",
+					"from": "13:00",
+					"to": "14:30",
+					"description": "Workshop i podcastproduktion för nybörjare."
+				},
+				{
+					"id": "10-6",
+					"name": "Livesändning: Kvällsrapport",
+					"from": "19:00",
+					"to": "20:00",
+					"description": "Dagens höjdpunkter från Jamboree 26."
+				}
+			]
+		}
 	},
 	{
 		"id": 11,
@@ -107,7 +399,73 @@
 		"lat": 55.979615826832323,
 		"icon": "mountain",
 		"iconVariant": "outline",
-		"color": "#15803d"
+		"color": "#15803d",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "17:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "17:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "11-1",
+					"name": "Introduktionskurs klättring",
+					"from": "09:00",
+					"to": "10:00",
+					"description": "Lär dig grunderna – utrustning, säkerhet och teknik."
+				},
+				{
+					"id": "11-2",
+					"name": "Klättringspass – nybörjare",
+					"from": "10:30",
+					"to": "12:00",
+					"description": "Guidade klättringspass för dig som aldrig klättrat."
+				},
+				{
+					"id": "11-3",
+					"name": "Klättringspass – medel",
+					"from": "13:00",
+					"to": "14:30",
+					"description": "För dig med lite erfarenhet."
+				},
+				{
+					"id": "11-4",
+					"name": "Klättringspass – avancerat",
+					"from": "15:00",
+					"to": "16:30",
+					"description": "Utmana dig själv på svårare leder."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "11-5",
+					"name": "Introduktionskurs klättring",
+					"from": "09:00",
+					"to": "10:00",
+					"description": "Lär dig grunderna – utrustning, säkerhet och teknik."
+				},
+				{
+					"id": "11-6",
+					"name": "Klättringspass – nybörjare",
+					"from": "10:30",
+					"to": "12:00",
+					"description": "Guidade klättringspass för dig som aldrig klättrat."
+				},
+				{
+					"id": "11-7",
+					"name": "Klättringspass – medel",
+					"from": "13:00",
+					"to": "14:30",
+					"description": "För dig med lite erfarenhet."
+				},
+				{
+					"id": "11-8",
+					"name": "Klättringspass – avancerat",
+					"from": "15:00",
+					"to": "16:30",
+					"description": "Utmana dig själv på svårare leder."
+				}
+			]
+		}
 	},
 	{
 		"id": 12,
@@ -117,7 +475,59 @@
 		"lat": 55.979456695663885,
 		"icon": "school",
 		"iconVariant": "outline",
-		"color": "#e41e86"
+		"color": "#e41e86",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "17:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "17:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "12-1",
+					"name": "Workshop: Filmproduktion",
+					"from": "09:00",
+					"to": "10:30",
+					"description": "Lär dig filma och redigera en kort dokumentär."
+				},
+				{
+					"id": "12-2",
+					"name": "Kurs: Naturvetenskap och scouting",
+					"from": "11:00",
+					"to": "12:30",
+					"description": "Spännande experiment kopplade till naturen."
+				},
+				{
+					"id": "12-3",
+					"name": "Workshop: Musik och hantverk",
+					"from": "13:30",
+					"to": "15:00",
+					"description": "Bygg ett enkelt instrument och spela tillsammans."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "12-4",
+					"name": "Workshop: Filmproduktion",
+					"from": "09:00",
+					"to": "10:30",
+					"description": "Lär dig filma och redigera en kort dokumentär."
+				},
+				{
+					"id": "12-5",
+					"name": "Kurs: Naturvetenskap och scouting",
+					"from": "11:00",
+					"to": "12:30",
+					"description": "Spännande experiment kopplade till naturen."
+				},
+				{
+					"id": "12-6",
+					"name": "Workshop: Musik och hantverk",
+					"from": "13:30",
+					"to": "15:00",
+					"description": "Bygg ett enkelt instrument och spela tillsammans."
+				}
+			]
+		}
 	},
 	{
 		"id": 13,
@@ -127,7 +537,59 @@
 		"lat": 55.979314529656314,
 		"icon": "building",
 		"iconVariant": "outline",
-		"color": "#57534e"
+		"color": "#57534e",
+		"openingHours": {
+			"2026-06-29": [{ "from": "10:00", "to": "16:00" }],
+			"2026-07-25": [{ "from": "10:00", "to": "16:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "13-1",
+					"name": "Guidad tur – scouthistoria",
+					"from": "10:00",
+					"to": "10:45",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				},
+				{
+					"id": "13-2",
+					"name": "Guidad tur – scouthistoria",
+					"from": "12:00",
+					"to": "12:45",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				},
+				{
+					"id": "13-3",
+					"name": "Guidad tur – scouthistoria",
+					"from": "14:30",
+					"to": "15:15",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "13-4",
+					"name": "Guidad tur – scouthistoria",
+					"from": "10:00",
+					"to": "10:45",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				},
+				{
+					"id": "13-5",
+					"name": "Guidad tur – scouthistoria",
+					"from": "12:00",
+					"to": "12:45",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				},
+				{
+					"id": "13-6",
+					"name": "Guidad tur – scouthistoria",
+					"from": "14:30",
+					"to": "15:15",
+					"description": "Följ med på en guidad tur genom scoutrörelsens historia."
+				}
+			]
+		}
 	},
 	{
 		"id": 14,
@@ -137,7 +599,122 @@
 		"lat": 55.97897792633006,
 		"icon": "hammer",
 		"iconVariant": "outline",
-		"color": "#b45309"
+		"color": "#b45309",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "17:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "17:00" }]
+		},
+		"aktiviteter": {
+			"2026-06-29": [
+				{
+					"id": "14-1",
+					"name": "Korgflätning för nybörjare",
+					"from": "09:00",
+					"to": "11:00",
+					"description": "Fläta din egen korg att ta med hem!"
+				},
+				{
+					"id": "14-2",
+					"name": "Träslöjd – nyckelring",
+					"from": "11:30",
+					"to": "13:00",
+					"description": "Tälja en enkel nyckelring i trä."
+				},
+				{
+					"id": "14-3",
+					"name": "Makramé",
+					"from": "14:00",
+					"to": "16:00",
+					"description": "Knyt ett makramé-armband eller väggdekoration."
+				},
+				{
+					"id": "14-4",
+					"name": "Korgflätning för nybörjare",
+					"from": "09:00",
+					"to": "11:00",
+					"description": "Fläta din egen korg att ta med hem!"
+				},
+				{
+					"id": "14-5",
+					"name": "Träslöjd – nyckelring",
+					"from": "11:30",
+					"to": "13:00",
+					"description": "Tälja en enkel nyckelring i trä."
+				},
+				{
+					"id": "14-6",
+					"name": "Makramé",
+					"from": "14:00",
+					"to": "16:00",
+					"description": "Knyt ett makramé-armband eller väggdekoration."
+				},
+				{
+					"id": "14-7",
+					"name": "Korgflätning för nybörjare",
+					"from": "09:00",
+					"to": "11:00",
+					"description": "Fläta din egen korg att ta med hem!"
+				},
+				{
+					"id": "14-8",
+					"name": "Träslöjd – nyckelring",
+					"from": "11:30",
+					"to": "13:00",
+					"description": "Tälja en enkel nyckelring i trä."
+				},
+				{
+					"id": "14-9",
+					"name": "Makramé",
+					"from": "14:00",
+					"to": "16:00",
+					"description": "Knyt ett makramé-armband eller väggdekoration."
+				},
+				{
+					"id": "14-10",
+					"name": "Korgflätning för nybörjare",
+					"from": "09:00",
+					"to": "11:00",
+					"description": "Fläta din egen korg att ta med hem!"
+				},
+				{
+					"id": "14-11",
+					"name": "Träslöjd – nyckelring",
+					"from": "11:30",
+					"to": "13:00",
+					"description": "Tälja en enkel nyckelring i trä."
+				},
+				{
+					"id": "14-12",
+					"name": "Makramé",
+					"from": "14:00",
+					"to": "16:00",
+					"description": "Knyt ett makramé-armband eller väggdekoration."
+				}
+			],
+			"2026-07-25": [
+				{
+					"id": "14-4",
+					"name": "Korgflätning för nybörjare",
+					"from": "09:00",
+					"to": "11:00",
+					"description": "Fläta din egen korg att ta med hem!"
+				},
+				{
+					"id": "14-5",
+					"name": "Träslöjd – nyckelring",
+					"from": "11:30",
+					"to": "13:00",
+					"description": "Tälja en enkel nyckelring i trä."
+				},
+				{
+					"id": "14-6",
+					"name": "Makramé",
+					"from": "14:00",
+					"to": "16:00",
+					"description": "Knyt ett makramé-armband eller väggdekoration."
+				}
+			]
+		}
 	},
 	{
 		"id": 15,
@@ -158,7 +735,11 @@
 		"lat": 55.978977883115405,
 		"icon": "tools-kitchen-2",
 		"iconVariant": "outline",
-		"color": "#ea580c"
+		"color": "#ea580c",
+		"openingHours": {
+			"2026-06-29": [{ "from": "07:00", "to": "21:00" }],
+			"2026-07-25": [{ "from": "07:00", "to": "21:00" }]
+		}
 	},
 	{
 		"id": 17,
@@ -168,7 +749,11 @@
 		"lat": 55.978618957237096,
 		"icon": "building-bank",
 		"iconVariant": "outline",
-		"color": "#15803d"
+		"color": "#15803d",
+		"openingHours": {
+			"2026-06-29": [{ "from": "10:00", "to": "15:00" }],
+			"2026-07-25": [{ "from": "10:00", "to": "15:00" }]
+		}
 	},
 	{
 		"id": 18,
@@ -178,7 +763,11 @@
 		"lat": 55.978535944182639,
 		"icon": "leaf",
 		"iconVariant": "outline",
-		"color": "#16a34a"
+		"color": "#16a34a",
+		"openingHours": {
+			"2026-06-29": [{ "from": "10:00", "to": "17:00" }],
+			"2026-07-25": [{ "from": "10:00", "to": "17:00" }]
+		}
 	},
 	{
 		"id": 19,
@@ -188,7 +777,11 @@
 		"lat": 55.979013579900894,
 		"icon": "shopping-bag",
 		"iconVariant": "outline",
-		"color": "#7c3aed"
+		"color": "#7c3aed",
+		"openingHours": {
+			"2026-06-29": [{ "from": "09:00", "to": "19:00" }],
+			"2026-07-25": [{ "from": "09:00", "to": "19:00" }]
+		}
 	},
 	{
 		"id": 20,

@@ -20,12 +20,14 @@ import { ResultsPane } from "./ResultsPane";
 type MapViewProps = {
 	selectedResult: SearchResult | null;
 	onLocationClick: (loc: Location) => void;
+	onMapClick: () => void;
 	getSheetHeight: () => number;
 };
 
 const MapView = memo(function MapView({
 	selectedResult,
 	onLocationClick,
+	onMapClick,
 	getSheetHeight,
 }: MapViewProps) {
 	const visibleIds = useMemo(() => {
@@ -47,6 +49,7 @@ const MapView = memo(function MapView({
 			<MapInteraction
 				selectedResult={selectedResult}
 				getSheetHeight={getSheetHeight}
+				onMapClick={onMapClick}
 			/>
 		</MapCanvas>
 	);
@@ -133,6 +136,7 @@ function MapApp() {
 			<MapView
 				selectedResult={selectedResult}
 				onLocationClick={handleLocationClick}
+				onMapClick={handleSheetClose}
 				getSheetHeight={getSheetHeight}
 			/>
 		</div>
