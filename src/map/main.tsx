@@ -30,20 +30,12 @@ const MapView = memo(function MapView({
 	onMapClick,
 	getSheetHeight,
 }: MapViewProps) {
-	const visibleIds = useMemo(() => {
-		if (selectedResult?.type === "location")
-			return new Set([selectedResult.location.id]);
-		if (selectedResult?.type === "group")
-			return new Set(selectedResult.locations.map((l) => l.id));
-		return null;
-	}, [selectedResult]);
-
 	return (
 		<MapCanvas class="flex-1 z-10">
 			<BaseLayers />
 			<LocationsLayer
 				onLocationClick={onLocationClick}
-				visibleIds={visibleIds}
+				activeId={selectedResult?.type === "location" ? selectedResult.location.id : null}
 			/>
 			<UserLocationLayer />
 			<MapInteraction

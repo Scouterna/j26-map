@@ -14,12 +14,12 @@ const PIN_CLASS = "j26-zoom-show-16";
 const LABEL_CLASS = "j26-zoom-show-17";
 
 const MARKER_SIZE = 32;
+// Transparent touch bridge between pin tip and label, in px.
+const GAP_SIZE = 6;
 
 type MarkerEntry = {
-	pinMarker: maplibregl.Marker;
-	labelMarker: maplibregl.Marker;
-	pinOuter: HTMLElement;
-	labelOuter: HTMLElement;
+	marker: maplibregl.Marker;
+	outer: HTMLElement;
 	pinInner: HTMLElement;
 	labelInner: HTMLElement;
 };
@@ -27,9 +27,10 @@ type MarkerEntry = {
 type Props = {
 	onLocationClick?: (loc: Location) => void;
 	visibleIds?: Set<string> | null;
+	activeId?: string | null;
 };
 
-export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
+export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = null }: Props) {
 	const map = useMap();
 	const [locations, setLocations] = useState<Location[]>([]);
 	const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
@@ -47,53 +48,46 @@ export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
 		for (const loc of locations) {
 			const lngLat: [number, number] = [loc.position[1], loc.position[0]];
 
-			// --- Pin ---
 			const pinInner = createMarkerElement(
 				loc.category.color,
 				getIconURL(loc.category.iconName, loc.category.iconVariant),
 			);
 			pinInner.classList.add(PIN_CLASS);
 
-			const pinOuter = document.createElement("div");
-			pinOuter.style.cssText = `width:${MARKER_SIZE}px;height:${MARKER_SIZE}px`;
-			pinOuter.appendChild(pinInner);
+			// Transparent touch bridge fills the gap between pin tip and label.
+			const gap = document.createElement("div");
+			gap.style.cssText = `height:${GAP_SIZE}px;width:${MARKER_SIZE}px`;
 
-			if (onLocationClick) {
-				pinOuter.style.cursor = "pointer";
-				pinOuter.addEventListener("click", (e) => {
-					e.stopPropagation();
-					onLocationClick(loc);
-				});
-			}
-
-			const pinMarker = new maplibregl.Marker({ element: pinOuter, anchor: "bottom" })
-				.setLngLat(lngLat)
-				.addTo(map);
-			allMarkers.push(pinMarker);
-
-			// --- Label ---
 			const labelInner = document.createElement("div");
 			labelInner.className = `j26-label ${LABEL_CLASS}`;
 			labelInner.textContent = loc.name;
 
-			const labelOuter = document.createElement("div");
-			labelOuter.style.cssText = "display:inline-block";
-			labelOuter.appendChild(labelInner);
+			// Single container — pin → gap → label all share one click target.
+			const outer = document.createElement("div");
+			outer.style.cssText = "display:flex;flex-direction:column;align-items:center";
+			outer.appendChild(pinInner);
+			outer.appendChild(gap);
+			outer.appendChild(labelInner);
 
 			if (onLocationClick) {
-				labelOuter.style.cursor = "pointer";
-				labelOuter.addEventListener("click", (e) => {
+				outer.style.cursor = "pointer";
+				outer.addEventListener("click", (e) => {
 					e.stopPropagation();
 					onLocationClick(loc);
 				});
 			}
 
-			const labelMarker = new maplibregl.Marker({ element: labelOuter, anchor: "top", offset: [0, 2] })
+			// anchor:"top" + offset [0, -MARKER_SIZE] places the pin's bottom tip at lngLat.
+			const marker = new maplibregl.Marker({
+				element: outer,
+				anchor: "top",
+				offset: [0, -MARKER_SIZE],
+			})
 				.setLngLat(lngLat)
 				.addTo(map);
-			allMarkers.push(labelMarker);
+			allMarkers.push(marker);
 
-			entries.set(loc.id, { pinMarker, labelMarker, pinOuter, labelOuter, pinInner, labelInner });
+			entries.set(loc.id, { marker, outer, pinInner, labelInner });
 		}
 
 		markersRef.current = entries;
@@ -104,25 +98,33 @@ export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
 		};
 	}, [map, locations, onLocationClick]);
 
+	// Highlight the active pin.
+	useEffect(() => {
+		const entries = markersRef.current;
+		for (const [id, { pinInner, outer }] of entries) {
+			const isActive = id === activeId;
+			pinInner.classList.toggle("j26-marker-active", isActive);
+			outer.style.zIndex = isActive ? "1" : "";
+		}
+	}, [activeId]);
+
 	// Override per-marker visibility and interactivity when visibleIds is set.
 	useEffect(() => {
 		const entries = markersRef.current;
 		if (entries.size === 0) return;
 
 		if (visibleIds) {
-			for (const [id, { pinOuter, labelOuter, pinInner, labelInner }] of entries) {
+			for (const [id, { outer, pinInner, labelInner }] of entries) {
 				const visible = visibleIds.has(id);
 				pinInner.style.setProperty("opacity", visible ? "1" : "0");
 				labelInner.style.setProperty("opacity", visible ? "1" : "0");
-				pinOuter.style.pointerEvents = visible ? "auto" : "none";
-				labelOuter.style.pointerEvents = visible ? "auto" : "none";
+				outer.style.pointerEvents = visible ? "auto" : "none";
 			}
 		} else {
-			for (const { pinOuter, labelOuter, pinInner, labelInner } of entries.values()) {
+			for (const { outer, pinInner, labelInner } of entries.values()) {
 				pinInner.style.removeProperty("opacity");
 				labelInner.style.removeProperty("opacity");
-				pinOuter.style.pointerEvents = "auto";
-				labelOuter.style.pointerEvents = "auto";
+				outer.style.pointerEvents = "auto";
 			}
 		}
 	}, [visibleIds]);

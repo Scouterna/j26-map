@@ -136,7 +136,7 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 			style={{ y }}
 			drag="y"
 			dragConstraints={{ top: 0, bottom: 0 }}
-			dragElastic={{ top: 0.05, bottom: 0.4 }}
+			dragElastic={{ top: 0, bottom: 0.4 }}
 			dragListener={true}
 			onDragEnd={(_, info) => {
 				if (info.offset.y > 80 || info.velocity.y > 400) {

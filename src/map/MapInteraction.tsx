@@ -57,6 +57,26 @@ export function MapInteraction({ selectedResult, getSheetHeight, onMapClick }: P
 		return () => map.off("click", handler);
 	}, [map, !!onMapClick]);
 
+	// Close sheet when the selected location pin pans off-screen or under the sheet.
+	useEffect(() => {
+		if (!map || !onMapClick || !selectedResult || selectedResult.type !== "location") return;
+		const lngLat = toLngLat(selectedResult.location.position);
+		// Pin is 32px tall, anchored at its tip. Check against its visual center (16px above tip).
+		const PIN_HALF = 20;
+		const handler = () => {
+			const { x, y } = map.project(lngLat);
+			const pinCenterY = y - PIN_HALF;
+			const container = map.getContainer();
+			const w = container.clientWidth;
+			const h = container.clientHeight;
+			const offScreen = pinCenterY < 0 || pinCenterY > h || x < 0 || x > w;
+			const behindSheet = pinCenterY > h - getSheetHeight();
+			if (offScreen || behindSheet) onMapClickRef.current?.();
+		};
+		map.on("moveend", handler);
+		return () => map.off("moveend", handler);
+	}, [map, selectedResult, !!onMapClick]);
+
 	useEffect(() => {
 		if (!map) return;
 
