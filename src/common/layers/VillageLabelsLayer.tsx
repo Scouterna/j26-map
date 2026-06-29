@@ -12,7 +12,7 @@ function createNumberElement(number: string): HTMLElement {
 	const el = document.createElement("div");
 	// j26-zoom-show-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
 	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
-	el.className = "j26-zoom-show-18";
+	el.className = "j26-zoom-show-16-5";
 	el.style.cssText = `
 		font-size: 11px;
 		font-weight: 600;

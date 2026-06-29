@@ -11,7 +11,13 @@ type Props = {
 	onResultClick: (result: SearchResult) => void;
 };
 
-function ResultIcon({ iconName, variant = "outline" }: { iconName: string; variant?: "outline" | "filled" }) {
+function ResultIcon({
+	iconName,
+	variant = "outline",
+}: {
+	iconName: string;
+	variant?: "outline" | "filled";
+}) {
 	return (
 		<img
 			src={getIconURL(iconName, variant)}
@@ -23,11 +29,24 @@ function ResultIcon({ iconName, variant = "outline" }: { iconName: string; varia
 	);
 }
 
-function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => void }) {
+function ResultRow({
+	result,
+	onClick,
+}: {
+	result: SearchResult;
+	onClick: () => void;
+}) {
 	if (result.type === "location") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
-				<ResultIcon iconName={result.location.category.iconName} variant={result.location.category.iconVariant} />
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
+				<ResultIcon
+					iconName={result.location.category.iconName}
+					variant={result.location.category.iconVariant}
+				/>
 				<span class="text-sm">{result.location.name}</span>
 			</button>
 		);
@@ -36,19 +55,32 @@ function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => v
 	if (result.type === "group") {
 		const representative = result.locations[0];
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
-				{representative
-					? <ResultIcon iconName={representative.category.iconName} variant={representative.category.iconVariant} />
-					: null}
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
+				{representative ? (
+					<ResultIcon
+						iconName={representative.category.iconName}
+						variant={representative.category.iconVariant}
+					/>
+				) : null}
 				<span class="text-sm flex-1">{result.displayName}</span>
-				<span class="text-xs text-gray-400 shrink-0">{result.locations.length} platser</span>
+				<span class="text-xs text-gray-400 shrink-0">
+					{result.locations.length} platser
+				</span>
 			</button>
 		);
 	}
 
 	if (result.type === "district") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
 				<ResultIcon iconName="map" />
 				<span class="text-sm">{result.name}</span>
 			</button>
@@ -57,9 +89,31 @@ function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => v
 
 	if (result.type === "village") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
 				<ResultIcon iconName="home" />
 				<span class="text-sm">By {result.villageNumber}</span>
+			</button>
+		);
+	}
+
+	if (result.type === "scout-group") {
+		return (
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
+				<ResultIcon iconName="users-group" />
+				<div class="flex flex-col min-w-0">
+					<span class="text-sm">{result.groupName}</span>
+					<span class="text-xs text-gray-400">
+						By {result.village.villageNumber}
+					</span>
+				</div>
 			</button>
 		);
 	}
@@ -71,7 +125,9 @@ function resultKey(result: SearchResult): string {
 	if (result.type === "location") return `location-${result.location.id}`;
 	if (result.type === "group") return `group-${result.tag}`;
 	if (result.type === "district") return `district-${result.name}`;
-	return `village-${result.villageNumber}`;
+	if (result.type === "village") return `village-${result.villageNumber}`;
+	if (result.type === "scout-group") return `scout-group-${result.groupName}`;
+	return "";
 }
 
 export function ResultsPane({ searchValue, onResultClick }: Props) {
@@ -109,7 +165,10 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 				<ul>
 					{results.map((result) => (
 						<li key={resultKey(result)}>
-							<ResultRow result={result} onClick={() => onResultClick(result)} />
+							<ResultRow
+								result={result}
+								onClick={() => onResultClick(result)}
+							/>
 						</li>
 					))}
 				</ul>

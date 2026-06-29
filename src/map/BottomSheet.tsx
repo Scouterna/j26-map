@@ -1,7 +1,8 @@
 import { ScoutButton } from "@scouterna/ui-react";
 import XIcon from "@tabler/icons/outline/x.svg?raw";
 import { motion, useAnimation, useMotionValue } from "motion/react";
-import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { getGroupsForVillage } from "../common/scoutGroupService";
 import { getIconURL } from "../common/icons";
 import type { Aktivitet, Location, OpeningHourSlot } from "../common/locationTypes";
 import type { SearchResult } from "../common/searchTypes";
@@ -106,6 +107,28 @@ function LocationBody({ location }: { location: Location }) {
 	);
 }
 
+function VillageBody({ villageNumber }: { villageNumber: string }) {
+	const [groups, setGroups] = useState<string[] | null>(null);
+
+	useEffect(() => {
+		getGroupsForVillage(villageNumber).then(setGroups);
+	}, [villageNumber]);
+
+	if (!groups) return <div class="h-4" />;
+	if (groups.length === 0) return <div class="h-4" />;
+
+	return (
+		<div class="border-t border-gray-100 pb-2">
+			<h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-2">Kårer</h3>
+			<ul>
+				{groups.map((name) => (
+					<li key={name} class="px-4 py-2 text-sm">{name}</li>
+				))}
+			</ul>
+		</div>
+	);
+}
+
 export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }: Props) {
 	const rootRef = useRef<HTMLDivElement>(null);
 	const y = useMotionValue(window.innerHeight);
@@ -204,6 +227,8 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 
 			{/* Body */}
 			{result.type === "location" && <LocationBody location={result.location} />}
+
+			{result.type === "village" && <VillageBody villageNumber={result.villageNumber} />}
 
 			{result.type === "group" && (
 				<ul class="overflow-y-auto max-h-64 border-t border-gray-100">

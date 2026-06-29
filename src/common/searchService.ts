@@ -1,19 +1,13 @@
-import type { Feature, FeatureCollection, LineString, Point } from "geojson";
+import type { Feature, FeatureCollection } from "geojson";
+import MiniSearch from "minisearch";
 import { getLocations } from "./locationService";
 import type { Location } from "./locationTypes";
-import type {
-	SearchResult,
-	SearchResultDistrict,
-	SearchResultGroup,
-	SearchResultLocation,
-	SearchResultVillage,
-} from "./searchTypes";
+import type { SearchResult } from "./searchTypes";
+import { getVillageEntries, type VillageEntry } from "./villageService";
 
 type SearchIndex = {
-	locations: Location[];
-	groups: Map<string, { displayName: string; locations: Location[] }>;
-	villages: Array<{ villageNumber: string; labelPoint: [number, number]; polygon: Feature | null }>;
-	districts: Array<{ name: string; feature: Feature }>;
+	ms: MiniSearch<{ id: string; name: string }>;
+	resultMap: Map<string, SearchResult>;
 };
 
 // Ray-casting point-in-polygon. coords are [lng, lat] pairs.
@@ -39,17 +33,13 @@ function normalize(s: string): string {
 		.replace(/ü/g, "u");
 }
 
-function matches(query: string, candidate: string): boolean {
-	return normalize(candidate).includes(normalize(query));
-}
-
 async function buildIndex(): Promise<SearchIndex> {
-	const [locations, groupsRaw, villageLabelsRaw, villagesRaw, districtsRaw] = await Promise.all([
+	const [locations, groupsRaw, villages, districtsRaw, scoutGroupsRaw] = await Promise.all([
 		getLocations(),
 		fetch("./location-groups.json").then((r) => r.json() as Promise<Record<string, string>>),
-		fetch("./layers/village_labels.geojson").then((r) => r.json() as Promise<FeatureCollection>),
-		fetch("./layers/villages.geojson").then((r) => r.json() as Promise<FeatureCollection>),
+		getVillageEntries(),
 		fetch("./layers/districts.geojson").then((r) => r.json() as Promise<FeatureCollection>),
+		fetch("./scout-groups.json").then((r) => r.json() as Promise<Array<{ name: string; village: string }>>),
 	]);
 
 	// Build group map: tag → { displayName, locations[] }
@@ -63,30 +53,84 @@ async function buildIndex(): Promise<SearchIndex> {
 		}
 	}
 
-	// Build village spatial index: for each label point find containing village polygon
-	const villagePolygons = (villagesRaw.features as Feature<LineString>[]).filter((f) => f.geometry != null);
-	const villages = (villageLabelsRaw.features as Feature<Point>[]).map((labelFeature) => {
-		const [lng, lat] = labelFeature.geometry.coordinates;
-		const villageNumber = String(labelFeature.properties?.village_number ?? "");
-
-		let polygon: Feature | null = null;
-		for (const vf of villagePolygons) {
-			const ring = vf.geometry.coordinates as number[][];
-			if (ring.length >= 3 && pointInPolygon(lng, lat, ring)) {
-				polygon = vf as Feature;
-				break;
-			}
-		}
-
-		return { villageNumber, labelPoint: [lat, lng] as [number, number], polygon };
-	});
-
 	// Districts
 	const districts = (districtsRaw.features as Feature[])
 		.filter((f) => f.properties?.name)
 		.map((f) => ({ name: f.properties!.name as string, feature: f }));
 
-	return { locations, groups, villages, districts };
+	// Scout groups — resolve each to a village entry
+	const villageByNumber = new Map(villages.map((v) => [v.villageNumber, v]));
+	const scoutGroups = scoutGroupsRaw
+		.map(({ name, village }) => ({ name, village: villageByNumber.get(village) ?? null }))
+		.filter((sg) => sg.village !== null) as Array<{ name: string; village: VillageEntry }>;
+
+	// Build MiniSearch index
+	const ms = new MiniSearch<{ id: string; name: string }>({
+		fields: ["name"],
+		processTerm: normalize,
+		searchOptions: {
+			prefix: true,
+			fuzzy: 0.2,
+			combineWith: "AND",
+		},
+	});
+
+	const resultMap = new Map<string, SearchResult>();
+	const docs: Array<{ id: string; name: string }> = [];
+
+	for (const [tag, group] of groups) {
+		if (group.locations.length > 0) {
+			const id = `group-${tag}`;
+			docs.push({ id, name: group.displayName });
+			resultMap.set(id, { type: "group", tag, displayName: group.displayName, locations: group.locations });
+		}
+	}
+
+	for (const loc of locations) {
+		if (loc.tags.length === 0) {
+			const id = `loc-${loc.id}`;
+			docs.push({ id, name: loc.name });
+			resultMap.set(id, { type: "location", location: loc });
+		}
+	}
+
+	for (let i = 0; i < districts.length; i++) {
+		const d = districts[i];
+		const id = `district-${i}`;
+		docs.push({ id, name: d.name });
+		resultMap.set(id, { type: "district", name: d.name, feature: d.feature });
+	}
+
+	for (const village of villages) {
+		const id = `village-${village.villageNumber}`;
+		// Index both the bare number and "By <number>" so either query form matches
+		docs.push({ id, name: `By ${village.villageNumber}` });
+		resultMap.set(id, {
+			type: "village",
+			villageNumber: village.villageNumber,
+			labelPoint: village.labelPoint,
+			polygon: village.polygon,
+		});
+	}
+
+	for (const sg of scoutGroups) {
+		const id = `sg-${sg.name}`;
+		docs.push({ id, name: sg.name });
+		resultMap.set(id, {
+			type: "scout-group",
+			groupName: sg.name,
+			village: {
+				type: "village",
+				villageNumber: sg.village.villageNumber,
+				labelPoint: sg.village.labelPoint,
+				polygon: sg.village.polygon,
+			},
+		});
+	}
+
+	ms.addAll(docs);
+
+	return { ms, resultMap };
 }
 
 let indexPromise: Promise<SearchIndex> | null = null;
@@ -104,50 +148,9 @@ export async function search(query: string): Promise<SearchResult[]> {
 	if (!query.trim()) return [];
 
 	const index = await getIndex();
-	const results: SearchResult[] = [];
 
-	// Group results
-	for (const [tag, group] of index.groups) {
-		if (group.locations.length > 0 && matches(query, group.displayName)) {
-			results.push({
-				type: "group",
-				tag,
-				displayName: group.displayName,
-				locations: group.locations,
-			} satisfies SearchResultGroup);
-		}
-	}
-
-	// Individual location results — only untagged locations (tagged ones are represented via groups)
-	for (const loc of index.locations) {
-		if (loc.tags.length === 0 && matches(query, loc.name)) {
-			results.push({ type: "location", location: loc } satisfies SearchResultLocation);
-		}
-	}
-
-	// District results
-	for (const district of index.districts) {
-		if (matches(query, district.name)) {
-			results.push({
-				type: "district",
-				name: district.name,
-				feature: district.feature,
-			} satisfies SearchResultDistrict);
-		}
-	}
-
-	// Village results — match on village_number substring
-	const normalizedQuery = normalize(query);
-	for (const village of index.villages) {
-		if (village.villageNumber.includes(normalizedQuery)) {
-			results.push({
-				type: "village",
-				villageNumber: village.villageNumber,
-				labelPoint: village.labelPoint,
-				polygon: village.polygon,
-			} satisfies SearchResultVillage);
-		}
-	}
-
-	return results;
+	return index.ms
+		.search(query)
+		.map((r) => index.resultMap.get(r.id))
+		.filter((r): r is SearchResult => r !== undefined);
 }

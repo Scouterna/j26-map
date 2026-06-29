@@ -26,8 +26,15 @@ export type SearchResultDistrict = {
 	feature: Feature;
 };
 
+export type SearchResultScoutGroup = {
+	type: "scout-group";
+	groupName: string;
+	village: SearchResultVillage;
+};
+
 export type SearchResult =
 	| SearchResultLocation
 	| SearchResultGroup
 	| SearchResultVillage
-	| SearchResultDistrict;
+	| SearchResultDistrict
+	| SearchResultScoutGroup;

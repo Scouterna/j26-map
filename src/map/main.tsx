@@ -21,6 +21,7 @@ type MapViewProps = {
 	selectedResult: SearchResult | null;
 	onLocationClick: (loc: Location) => void;
 	onMapClick: () => void;
+	onResultClick: (result: SearchResult) => void;
 	getSheetHeight: () => number;
 };
 
@@ -28,6 +29,7 @@ const MapView = memo(function MapView({
 	selectedResult,
 	onLocationClick,
 	onMapClick,
+	onResultClick,
 	getSheetHeight,
 }: MapViewProps) {
 	return (
@@ -42,6 +44,7 @@ const MapView = memo(function MapView({
 				selectedResult={selectedResult}
 				getSheetHeight={getSheetHeight}
 				onMapClick={onMapClick}
+				onResultClick={onResultClick}
 			/>
 		</MapCanvas>
 	);
@@ -62,7 +65,8 @@ function MapApp() {
 	const getSheetHeight = useCallback(() => sheetHeightRef.current, []);
 
 	const handleResultClick = useCallback((result: SearchResult) => {
-		setSelectedResult(result);
+		// Scout group results navigate to their village
+		setSelectedResult(result.type === "scout-group" ? result.village : result);
 		setSearchActive(false);
 	}, []);
 
@@ -129,6 +133,7 @@ function MapApp() {
 				selectedResult={selectedResult}
 				onLocationClick={handleLocationClick}
 				onMapClick={handleSheetClose}
+				onResultClick={handleResultClick}
 				getSheetHeight={getSheetHeight}
 			/>
 		</div>

@@ -5,6 +5,7 @@ import type { PointTuple } from "../common/locationTypes";
 import { toLngLat } from "../common/locationTypes";
 import { useMap } from "../common/MapCanvas";
 import type { SearchResult } from "../common/searchTypes";
+import { getVillageAtPoint } from "../common/villageService";
 
 const HIGHLIGHT_SOURCE = "village-highlight";
 const HIGHLIGHT_LAYER = "village-highlight-line";
@@ -42,20 +43,30 @@ type Props = {
 	selectedResult: SearchResult | null;
 	getSheetHeight: () => number;
 	onMapClick?: () => void;
+	onResultClick?: (result: SearchResult) => void;
 };
 
-export function MapInteraction({ selectedResult, getSheetHeight, onMapClick }: Props) {
+export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onResultClick }: Props) {
 	const map = useMap();
 	const highlightRef = useRef(false);
 	const onMapClickRef = useRef(onMapClick);
 	onMapClickRef.current = onMapClick;
+	const onResultClickRef = useRef(onResultClick);
+	onResultClickRef.current = onResultClick;
 
 	useEffect(() => {
-		if (!map || !onMapClick) return;
-		const handler = () => onMapClickRef.current?.();
+		if (!map) return;
+		const handler = async (e: maplibregl.MapMouseEvent) => {
+			const village = await getVillageAtPoint(e.lngLat.lng, e.lngLat.lat);
+			if (village) {
+				onResultClickRef.current?.(village);
+			} else {
+				onMapClickRef.current?.();
+			}
+		};
 		map.on("click", handler);
 		return () => map.off("click", handler);
-	}, [map, !!onMapClick]);
+	}, [map]);
 
 	// Close sheet when the selected location pin pans off-screen or under the sheet.
 	useEffect(() => {

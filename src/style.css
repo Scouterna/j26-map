@@ -16,6 +16,11 @@ body {
 	transition: opacity 250ms;
 }
 
+.j26-zoom-show-16-5 {
+	opacity: clamp(0, calc((var(--map-zoom-anim) - 16.49) * 9999), 1);
+	transition: opacity 250ms;
+}
+
 .j26-zoom-show-17 {
 	opacity: clamp(0, calc((var(--map-zoom-anim) - 16.99) * 9999), 1);
 	transition: opacity 250ms;
