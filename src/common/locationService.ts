@@ -15,8 +15,11 @@ type RawLocation = {
 };
 
 export async function getLocations(): Promise<Location[]> {
-	const res = await fetch("./locations.json");
-	const raw: RawLocation[] = await res.json();
+	type MarkerSvgEntry = { src: string; aspectRatio: number };
+	const [raw, markerSvgs] = await Promise.all([
+		fetch("./locations.json").then((r) => r.json() as Promise<RawLocation[]>),
+		fetch("./marker-svgs.json").then((r) => r.json() as Promise<Record<string, MarkerSvgEntry>>),
+	]);
 	return raw.map((loc) => ({
 		id: String(loc.id),
 		name: loc.name,
@@ -27,6 +30,8 @@ export async function getLocations(): Promise<Location[]> {
 			color: loc.color,
 		},
 		tags: loc.tags ?? [],
+		markerSvg: markerSvgs[loc.name]?.src,
+		markerSvgAspectRatio: markerSvgs[loc.name]?.aspectRatio,
 		openingHours: loc.openingHours,
 		aktiviteter: loc.aktiviteter,
 	}));

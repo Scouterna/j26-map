@@ -28,6 +28,8 @@ export type Location = {
 	position: PointTuple;
 	category: Category;
 	tags: string[];
+	markerSvg?: string;
+	markerSvgAspectRatio?: number;
 	openingHours?: Record<string, OpeningHourSlot[]>;
 	aktiviteter?: Record<string, Aktivitet[]>;
 };

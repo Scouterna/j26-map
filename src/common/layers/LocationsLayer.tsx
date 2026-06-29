@@ -4,7 +4,7 @@ import { getIconURL } from "../icons";
 import { getLocations } from "../locationService";
 import type { Location } from "../locationTypes";
 import { useMap } from "../MapCanvas";
-import { createMarkerElement } from "../marker";
+import { SVG_BADGE_WIDTH, createMarkerElement, createSvgBadgeMarker } from "../marker";
 
 // CSS classes in style.css control zoom-based opacity.
 // MapLibre's _updateOpacity calls `el.style.opacity = "1"` on every move event, overriding
@@ -49,21 +49,24 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 		for (const loc of locations) {
 			const lngLat: [number, number] = [loc.position[1], loc.position[0]];
 
-			const pinInner = createMarkerElement(
-				loc.category.color,
-				getIconURL(loc.category.iconName, loc.category.iconVariant),
-			);
+			const isBadge = !!loc.markerSvg;
+			const pinInner = isBadge
+				? createSvgBadgeMarker(loc.markerSvg!)
+				: createMarkerElement(
+					loc.category.color,
+					getIconURL(loc.category.iconName, loc.category.iconVariant),
+				);
 			pinInner.classList.add(PIN_CLASS);
 
 			// Transparent touch bridge fills the gap between pin tip and label.
 			const gap = document.createElement("div");
-			gap.style.cssText = `height:${GAP_SIZE}px;width:${MARKER_SIZE}px`;
+			gap.style.cssText = `height:${GAP_SIZE}px;width:${isBadge ? SVG_BADGE_WIDTH : MARKER_SIZE}px`;
 
 			const labelInner = document.createElement("div");
 			labelInner.className = `j26-label ${LABEL_CLASS}`;
 			labelInner.textContent = loc.name;
 
-			// Single container — pin → gap → label all share one click target.
+			// Single container — pin/badge → gap → label all share one click target.
 			const outer = document.createElement("div");
 			outer.style.cssText = "display:flex;flex-direction:column;align-items:center";
 			outer.appendChild(pinInner);
@@ -78,11 +81,11 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 				});
 			}
 
-			// anchor:"top" + offset [0, -MARKER_SIZE] places the pin's bottom tip at lngLat.
+			const badgeHeight = isBadge ? Math.round(SVG_BADGE_WIDTH / (loc.markerSvgAspectRatio ?? 2)) : 0;
 			const marker = new maplibregl.Marker({
 				element: outer,
 				anchor: "top",
-				offset: [0, -MARKER_SIZE],
+				offset: [0, -(isBadge ? badgeHeight : MARKER_SIZE)],
 			})
 				.setLngLat(lngLat)
 				.addTo(map);
@@ -105,7 +108,11 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 		for (const [id, { pinInner, labelInner, outer }] of entries) {
 			const isActive = id === activeId;
 			const forceVisible = forceVisibleIds?.has(id) ?? false;
-			pinInner.classList.toggle("j26-marker-active", isActive);
+			if (pinInner.classList.contains("j26-badge-scale")) {
+				pinInner.style.setProperty("--badge-boost", isActive ? "1.35" : "1");
+			} else {
+				pinInner.classList.toggle("j26-marker-active", isActive);
+			}
 			outer.style.zIndex = isActive ? "1" : "";
 			// Inline opacity overrides the zoom-based CSS class opacity.
 			if (isActive || forceVisible) {

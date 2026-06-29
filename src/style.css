@@ -46,6 +46,13 @@ body {
 	opacity: clamp(0, calc((16.5 - var(--map-zoom-anim)) * 2), 1);
 }
 
+.j26-badge-scale {
+	/* Scales at half the speed of full geo-zoom; transform-origin keeps bottom anchored at location point */
+	/* --badge-boost is set to 1.35 via inline style when active */
+	transform: scale(calc(pow(2, (var(--map-zoom-anim) - 16.5) * 0.5) * var(--badge-boost, 1)));
+	transform-origin: center bottom;
+}
+
 .j26-zoom-hide-18 {
 	opacity: clamp(0, calc((18 - var(--map-zoom-anim)) * 9999), 1);
 	transition: opacity 250ms;

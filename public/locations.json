@@ -1,7 +1,6 @@
 [
 	{
 		"id": 1,
-		"slug": "info",
 		"name": "Infotält",
 		"lng": 14.134385999313892,
 		"lat": 55.979798511431689,
@@ -69,7 +68,6 @@
 	},
 	{
 		"id": 2,
-		"slug": "listening_ears",
 		"name": "Listening Ears",
 		"lng": 14.134016331265492,
 		"lat": 55.979815497779612,
@@ -89,7 +87,6 @@
 	},
 	{
 		"id": 3,
-		"slug": "bibliotek",
 		"name": "Bibliotek",
 		"lng": 14.133602682364456,
 		"lat": 55.979693174712395,
@@ -103,7 +100,6 @@
 	},
 	{
 		"id": 4,
-		"slug": "andlighetsomrade",
 		"name": "Andlighetsområde",
 		"lng": 14.133814486214549,
 		"lat": 55.979729798031698,
@@ -117,7 +113,6 @@
 	},
 	{
 		"id": 5,
-		"slug": "forelasningstalt",
 		"name": "Föreläsningstält",
 		"lng": 14.1333264213138,
 		"lat": 55.97974588243288,
@@ -193,10 +188,9 @@
 	},
 	{
 		"id": 6,
-		"slug": "cafe_int_gruppen",
-		"name": "Café Internationella Gruppen",
-		"lng": 14.13305643653784,
-		"lat": 55.979524014078862,
+		"name": "Heartbeat Cafe",
+		"lng": 14.13308855653784,
+		"lat": 55.979461184078862,
 		"icon": "coffee",
 		"iconVariant": "outline",
 		"color": "#c2410c",
@@ -207,7 +201,6 @@
 	},
 	{
 		"id": 7,
-		"slug": "dansbanan",
 		"name": "Dansbanan",
 		"lng": 14.133237481282917,
 		"lat": 55.979242507178213,
@@ -255,7 +248,6 @@
 	},
 	{
 		"id": 8,
-		"slug": "spelarkad",
 		"name": "Spelarkad",
 		"lng": 14.133372664514489,
 		"lat": 55.979035905337426,
@@ -317,8 +309,7 @@
 	},
 	{
 		"id": 9,
-		"slug": "josbar",
-		"name": "Josbar",
+		"name": "Josbaren",
 		"lng": 14.133750677961949,
 		"lat": 55.979200649776246,
 		"icon": "beer",
@@ -331,7 +322,6 @@
 	},
 	{
 		"id": 10,
-		"slug": "radiostudion",
 		"name": "Radiostudion",
 		"lng": 14.134395290933448,
 		"lat": 55.979626496970241,
@@ -393,7 +383,6 @@
 	},
 	{
 		"id": 11,
-		"slug": "klattring",
 		"name": "Klättring",
 		"lng": 14.134709905155816,
 		"lat": 55.979615826832323,
@@ -469,7 +458,6 @@
 	},
 	{
 		"id": 12,
-		"slug": "folkhogskolan",
 		"name": "Folkhögskolan",
 		"lng": 14.134707299076785,
 		"lat": 55.979456695663885,
@@ -531,7 +519,6 @@
 	},
 	{
 		"id": 13,
-		"slug": "scoutmuseet",
 		"name": "Scoutmuseet",
 		"lng": 14.13477895912246,
 		"lat": 55.979314529656314,
@@ -593,7 +580,6 @@
 	},
 	{
 		"id": 14,
-		"slug": "hantverkstalt",
 		"name": "Hantverkstält",
 		"lng": 14.134234009068011,
 		"lat": 55.97897792633006,
@@ -718,7 +704,6 @@
 	},
 	{
 		"id": 15,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.133032113040791,
 		"lat": 55.980732147929309,
@@ -729,10 +714,9 @@
 	},
 	{
 		"id": 16,
-		"slug": "food_house",
 		"name": "Food House",
 		"lng": 14.134828599791419,
-		"lat": 55.978977883115405,
+		"lat": 55.978906013115405,
 		"icon": "tools-kitchen-2",
 		"iconVariant": "outline",
 		"color": "#ea580c",
@@ -743,7 +727,6 @@
 	},
 	{
 		"id": 17,
-		"slug": "sparbanken",
 		"name": "Sparbanken",
 		"lng": 14.133490955952775,
 		"lat": 55.978618957237096,
@@ -757,7 +740,6 @@
 	},
 	{
 		"id": 18,
-		"slug": "fairtrade",
 		"name": "Fairtrade",
 		"lng": 14.133940245823972,
 		"lat": 55.978535944182639,
@@ -771,7 +753,6 @@
 	},
 	{
 		"id": 19,
-		"slug": "scoutshop",
 		"name": "Scoutshop",
 		"lng": 14.135512561731156,
 		"lat": 55.979013579900894,
@@ -785,7 +766,6 @@
 	},
 	{
 		"id": 20,
-		"slug": "slanor_1",
 		"name": "Slanförråd 1",
 		"lng": 14.128550098551049,
 		"lat": 55.980534369644815,
@@ -796,7 +776,6 @@
 	},
 	{
 		"id": 21,
-		"slug": "slanor_2",
 		"name": "Slanförråd 2",
 		"lng": 14.135993637054094,
 		"lat": 55.979637872490969,
@@ -807,7 +786,6 @@
 	},
 	{
 		"id": 22,
-		"slug": "slanor_3",
 		"name": "Slanförråd 3",
 		"lng": 14.140291614519272,
 		"lat": 55.983234563341902,
@@ -818,7 +796,6 @@
 	},
 	{
 		"id": 23,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.134616818553088,
 		"lat": 55.980770386964956,
@@ -829,7 +806,6 @@
 	},
 	{
 		"id": 24,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.135066208862833,
 		"lat": 55.980856319054034,
@@ -840,7 +816,6 @@
 	},
 	{
 		"id": 25,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.135489332964559,
 		"lat": 55.980940122177778,
@@ -851,7 +826,6 @@
 	},
 	{
 		"id": 26,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.135217609218012,
 		"lat": 55.980613428196236,
@@ -862,7 +836,6 @@
 	},
 	{
 		"id": 27,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.136206168510645,
 		"lat": 55.978714812010274,
@@ -873,7 +846,6 @@
 	},
 	{
 		"id": 28,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.127587539479917,
 		"lat": 55.977169236991962,
@@ -884,7 +856,6 @@
 	},
 	{
 		"id": 29,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128183019161551,
 		"lat": 55.978761232411124,
@@ -895,7 +866,6 @@
 	},
 	{
 		"id": 30,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128276629709946,
 		"lat": 55.978747744779049,
@@ -906,7 +876,6 @@
 	},
 	{
 		"id": 31,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128624783490254,
 		"lat": 55.980867456909849,
@@ -917,7 +886,6 @@
 	},
 	{
 		"id": 32,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128652940313822,
 		"lat": 55.980820173391912,
@@ -928,7 +896,6 @@
 	},
 	{
 		"id": 33,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128650066176757,
 		"lat": 55.98076739129877,
@@ -939,7 +906,6 @@
 	},
 	{
 		"id": 34,
-		"slug": "toalett_dusch",
 		"name": "Toalett/Dusch",
 		"lng": 14.128650634512258,
 		"lat": 55.980719494207698,
