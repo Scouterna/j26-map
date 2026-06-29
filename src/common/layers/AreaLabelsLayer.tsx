@@ -1,8 +1,7 @@
-import { DivIcon, LayerGroup, Marker, type PointTuple } from "leaflet";
+import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
+import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
-
-const HIDE_AT_ZOOM = 18;
 
 type DistrictFeature = {
 	properties: { name: string; color?: string };
@@ -33,25 +32,23 @@ function centroid(coords: number[][]): PointTuple {
 	return [cy, cx]; // [lat, lng]
 }
 
-function createLabelIcon(name: string, color = "#3d5a3e") {
-	return new DivIcon({
-		className: "",
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
-		html: `<div style="
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			font-size: calc(18px * pow(2, (min(var(--map-zoom-anim), 17) - 16) * 0.4));
-			font-weight: 600;
-			color: ${color};
-			text-shadow: 0 0 3px #cdebb0, 0 0 6px #cdebb0;
-			white-space: nowrap;
-			pointer-events: none;
-			user-select: none;
-			transform: translate(-50%, -50%);
-		">${name}</div>`,
-	});
+function createLabelElement(name: string, color = "#3d5a3e"): HTMLElement {
+	const el = document.createElement("div");
+	// j26-zoom-hide-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
+	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
+	el.className = "j26-zoom-hide-16";
+	el.style.cssText = `
+		font-size: calc(18px * pow(2, (min(var(--map-zoom-anim), 17) - 16) * 0.4));
+		font-weight: 600;
+		color: ${color};
+		text-shadow: 0 0 3px #cdebb0, 0 0 6px #cdebb0;
+		white-space: nowrap;
+		pointer-events: none;
+		user-select: none;
+		z-index: 450;
+	`;
+	el.textContent = name;
+	return el;
 }
 
 export function AreaLabelsLayer() {
@@ -76,29 +73,21 @@ export function AreaLabelsLayer() {
 
 	useEffect(() => {
 		if (!map || labels.length === 0) return;
-		const mapRef = map;
 
-		const pane = mapRef.createPane("areaLabelsPane");
-		pane.style.zIndex = "450";
-		pane.style.transition = "opacity 250ms";
-		pane.style.opacity = `clamp(0, calc((${HIDE_AT_ZOOM} - var(--map-zoom-anim)) * 9999), 1)`;
-
-		const group = new LayerGroup(
-			labels.map(
-				({ name, color, position }) =>
-					new Marker(position, {
-						pane: "areaLabelsPane",
-						icon: createLabelIcon(name, color),
-						interactive: false,
-					}),
-			),
-		);
-
-		mapRef.addLayer(group);
+		const markers = labels.map(({ name, color, position }) => {
+			// Inner element carries the zoom class; MapLibre's _updateOpacity sets opacity on the
+			// outer wrapper only, so the inner zoom-class opacity is not overridden.
+			const inner = createLabelElement(name, color);
+			const outer = document.createElement("div");
+			outer.style.cssText = "display:inline-block;pointer-events:none";
+			outer.appendChild(inner);
+			return new maplibregl.Marker({ element: outer, anchor: "center" })
+				.setLngLat([position[1], position[0]])
+				.addTo(map);
+		});
 
 		return () => {
-			mapRef.removeLayer(group);
-			pane.remove();
+			for (const m of markers) m.remove();
 		};
 	}, [map, labels]);
 

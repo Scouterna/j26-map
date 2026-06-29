@@ -1,29 +1,36 @@
-import { LayerGroup, Marker } from "leaflet";
+import maplibregl from "maplibre-gl";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../icons";
 import { getLocations } from "../locationService";
 import type { Location } from "../locationTypes";
 import { useMap } from "../MapCanvas";
-import { createMarkerIcon } from "../marker";
+import { createMarkerElement } from "../marker";
 
-const MIN_ZOOM = 18;
-const MIN_ZOOM_LABELS = 19;
+// CSS classes in style.css control zoom-based opacity.
+// MapLibre's _updateOpacity calls `el.style.opacity = "1"` on every move event, overriding
+// anything set on the MapLibre marker element. We wrap content in an inner div: MapLibre owns
+// the outer wrapper (opacity always 1), our class controls the inner element's opacity.
+const PIN_CLASS = "j26-zoom-show-16";
+const LABEL_CLASS = "j26-zoom-show-17";
 
-const ZOOM_OPACITY = `clamp(0, calc((var(--map-zoom-anim) - ${MIN_ZOOM - 0.01}) * 9999), 1)`;
-const ZOOM_OPACITY_LABELS = `clamp(0, calc((var(--map-zoom-anim) - ${MIN_ZOOM_LABELS - 0.01}) * 9999), 1)`;
+const MARKER_SIZE = 32;
+
+type MarkerPair = {
+	pin: maplibregl.Marker;
+	label: maplibregl.Marker;
+	pinInner: HTMLElement;
+	labelInner: HTMLElement;
+};
 
 type Props = {
 	onLocationClick?: (loc: Location) => void;
-	/** null = all locations use zoom-based visibility; a Set = only those IDs are shown */
 	visibleIds?: Set<string> | null;
 };
 
 export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
 	const map = useMap();
 	const [locations, setLocations] = useState<Location[]>([]);
-	const paneRef = useRef<HTMLElement | null>(null);
-	const labelPaneRef = useRef<HTMLElement | null>(null);
-	const markersRef = useRef<Map<string, Marker>>(new Map());
+	const markersRef = useRef<Map<string, MarkerPair>>(new Map());
 
 	useEffect(() => {
 		getLocations().then(setLocations);
@@ -31,74 +38,82 @@ export function LocationsLayer({ onLocationClick, visibleIds = null }: Props) {
 
 	useEffect(() => {
 		if (!map || locations.length === 0) return;
-		const mapRef = map;
 
-		const pane = mapRef.createPane("locationsPane");
-		pane.style.zIndex = "600";
-		pane.style.transition = "opacity 250ms";
-		pane.style.opacity = ZOOM_OPACITY;
-		paneRef.current = pane;
+		const pairs = new Map<string, MarkerPair>();
+		const pinWrappers: maplibregl.Marker[] = [];
+		const labelWrappers: maplibregl.Marker[] = [];
 
-		const labelPane = mapRef.createPane("locationsLabelPane");
-		labelPane.style.zIndex = "601";
-		labelPane.style.transition = "opacity 250ms";
-		labelPane.style.opacity = ZOOM_OPACITY_LABELS;
-		labelPaneRef.current = labelPane;
+		for (const loc of locations) {
+			// --- Pin ---
+			// Inner element has the zoom class; outer wrapper is what MapLibre controls.
+			const pinInner = createMarkerElement(
+				loc.category.color,
+				getIconURL(loc.category.iconName, loc.category.iconVariant),
+			);
+			pinInner.classList.add(PIN_CLASS);
+			pinInner.style.zIndex = "600";
 
-		const markers = new Map<string, Marker>();
-		const group = new LayerGroup(
-			locations.map((loc) => {
-				const marker = new Marker(loc.position, {
-					pane: "locationsPane",
-					icon: createMarkerIcon(
-						loc.category.color,
-						getIconURL(loc.category.iconName, loc.category.iconVariant),
-					),
-				});
-				marker.bindTooltip(loc.name, {
-					permanent: true,
-					direction: "bottom",
-					className: "j26-label",
-					pane: "locationsLabelPane",
-					offset: [0, 2],
-				});
-				if (onLocationClick) marker.on("click", () => onLocationClick(loc));
-				markers.set(loc.id, marker);
-				return marker;
-			}),
-		);
-		markersRef.current = markers;
+			const pinOuter = document.createElement("div");
+			pinOuter.style.cssText = `width:${MARKER_SIZE}px;height:${MARKER_SIZE}px`;
+			pinOuter.appendChild(pinInner);
 
-		mapRef.addLayer(group);
+			if (onLocationClick) {
+				pinOuter.style.cursor = "pointer";
+				pinOuter.addEventListener("click", () => onLocationClick(loc));
+			}
+
+			const pin = new maplibregl.Marker({ element: pinOuter, anchor: "bottom" })
+				.setLngLat([loc.position[1], loc.position[0]])
+				.addTo(map);
+			pinWrappers.push(pin);
+
+			// --- Label ---
+			const labelInner = document.createElement("div");
+			labelInner.className = `j26-label ${LABEL_CLASS}`;
+			labelInner.textContent = loc.name;
+			labelInner.style.cssText = "pointer-events:none;z-index:601";
+
+			const labelOuter = document.createElement("div");
+			labelOuter.style.cssText = "display:inline-block;pointer-events:none";
+			labelOuter.appendChild(labelInner);
+
+			const label = new maplibregl.Marker({
+				element: labelOuter,
+				anchor: "top",
+				offset: [0, 2],
+			})
+				.setLngLat([loc.position[1], loc.position[0]])
+				.addTo(map);
+			labelWrappers.push(label);
+
+			pairs.set(loc.id, { pin, label, pinInner, labelInner });
+		}
+
+		markersRef.current = pairs;
 
 		return () => {
-			mapRef.removeLayer(group);
-			pane.remove();
-			labelPane.remove();
-			paneRef.current = null;
-			labelPaneRef.current = null;
+			for (const p of pinWrappers) p.remove();
+			for (const l of labelWrappers) l.remove();
 			markersRef.current = new Map();
 		};
 	}, [map, locations, onLocationClick]);
 
-	// Update pane opacity and individual marker visibility when visibleIds changes
+	// Override per-marker visibility when visibleIds is set.
+	// Inline style (higher specificity) overrides the zoom class; removeProperty restores it.
 	useEffect(() => {
-		if (!paneRef.current || !labelPaneRef.current) return;
+		const pairs = markersRef.current;
+		if (pairs.size === 0) return;
 
 		if (visibleIds) {
-			paneRef.current.style.opacity = "1";
-			labelPaneRef.current.style.opacity = "1";
-			for (const [id, marker] of markersRef.current) {
-				const visible = visibleIds.has(id);
-				marker.setOpacity(visible ? 1 : 0);
-				marker.getTooltip()?.setOpacity(visible ? 1 : 0);
+			for (const [id, { pinInner, labelInner }] of pairs) {
+				const v = visibleIds.has(id) ? "1" : "0";
+				pinInner.style.setProperty("opacity", v);
+				labelInner.style.setProperty("opacity", v);
 			}
 		} else {
-			paneRef.current.style.opacity = ZOOM_OPACITY;
-			labelPaneRef.current.style.opacity = ZOOM_OPACITY_LABELS;
-			for (const marker of markersRef.current.values()) {
-				marker.setOpacity(1);
-				marker.getTooltip()?.setOpacity(1);
+			for (const { pinInner, labelInner } of pairs.values()) {
+				pinInner.style.removeProperty("opacity");
+				labelInner.style.removeProperty("opacity");
 			}
 		}
 	}, [visibleIds]);

@@ -10,6 +10,37 @@ body {
 	color: var(--color-text-base);
 }
 
+/* Zoom-based marker visibility via inherited --map-zoom-anim CSS var */
+.j26-zoom-show-16 {
+	opacity: clamp(0, calc((var(--map-zoom-anim) - 15.99) * 9999), 1);
+	transition: opacity 250ms;
+}
+
+.j26-zoom-show-17 {
+	opacity: clamp(0, calc((var(--map-zoom-anim) - 16.99) * 9999), 1);
+	transition: opacity 250ms;
+}
+
+.j26-zoom-show-18 {
+	opacity: clamp(0, calc((var(--map-zoom-anim) - 17.99) * 9999), 1);
+	transition: opacity 250ms;
+}
+
+.j26-zoom-show-19 {
+	opacity: clamp(0, calc((var(--map-zoom-anim) - 18.99) * 9999), 1);
+	transition: opacity 250ms;
+}
+
+.j26-zoom-hide-16 {
+	/* Linear fade over zoom 15.5→16, matching the districts-fill interpolation range */
+	opacity: clamp(0, calc((16 - var(--map-zoom-anim)) * 2), 1);
+}
+
+.j26-zoom-hide-18 {
+	opacity: clamp(0, calc((18 - var(--map-zoom-anim)) * 9999), 1);
+	transition: opacity 250ms;
+}
+
 .j26-label {
 	background: transparent;
 	border: none;

@@ -1,19 +1,20 @@
-import { control, Map as LMap, type PointTuple, svg, TileLayer } from "leaflet";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { ComponentChildren } from "preact";
 import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
-import "leaflet/dist/leaflet.css";
-import "leaflet-edgebuffer";
+import type { PointTuple } from "./locationTypes";
 
 const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
 const DEFAULT_ZOOM = 16;
 
-const MAX_BOUNDS: [[number, number], [number, number]] = [
-	[55.961, 14.115],
-	[55.992, 14.157],
+// [sw, ne] as [lng, lat] pairs
+const MAX_BOUNDS: maplibregl.LngLatBoundsLike = [
+	[14.115, 55.961],
+	[14.157, 55.992],
 ];
 
-const MapContext = createContext<LMap | null>(null);
+const MapContext = createContext<maplibregl.Map | null>(null);
 
 export function useMap() {
 	return useContext(MapContext);
@@ -23,7 +24,6 @@ type Props = {
 	class?: string;
 	children?: ComponentChildren;
 	interactive?: boolean;
-	fadeAnimation?: boolean;
 	center?: PointTuple;
 	zoom?: number;
 };
@@ -32,129 +32,78 @@ export function MapCanvas({
 	class: className,
 	children,
 	interactive = true,
-	fadeAnimation = true,
 	center = DEFAULT_CENTER,
 	zoom = DEFAULT_ZOOM,
 }: Props) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [map, setMap] = useState<LMap | null>(null);
+	const [map, setMap] = useState<maplibregl.Map | null>(null);
 
 	useEffect(() => {
 		if (!containerRef.current) return;
 
-		const m = new LMap(containerRef.current, {
-			zoomControl: false,
-			fadeAnimation,
-			renderer: svg({ padding: 1 }),
-			maxBounds: MAX_BOUNDS,
-			maxBoundsViscosity: 1,
-		});
+		containerRef.current.style.setProperty("--map-zoom", String(zoom));
+		containerRef.current.style.setProperty("--map-zoom-anim", String(zoom));
 
-		new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-			maxZoom: 19,
-			minZoom: 10,
-			attribution:
-				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-			// edgeBufferTiles: 1,
-		}).addTo(m);
+		const m = new maplibregl.Map({
+			container: containerRef.current,
+			style: {
+				version: 8,
+				sources: {
+					osm: {
+						type: "raster",
+						tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+						tileSize: 256,
+						attribution:
+							'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+						minzoom: 10,
+						maxzoom: 20,
+					},
+				},
+				layers: [{ id: "osm-tiles", type: "raster", source: "osm" }],
+			},
+			center: [center[1], center[0]], // [lng, lat]
+			zoom,
+			maxBounds: MAX_BOUNDS,
+			...(interactive && { minZoom: 14, maxZoom: 19 }),
+		});
 
 		if (interactive) {
-			control.zoom({ position: "bottomright" }).addTo(m);
-			m.setMinZoom(14);
-			m.setMaxZoom(19);
+			m.addControl(
+				new maplibregl.NavigationControl({ showCompass: false }),
+				"bottom-right",
+			);
 		} else {
-			m.dragging.disable();
-			m.touchZoom.disable();
+			m.dragPan.disable();
+			m.scrollZoom.disable();
 			m.doubleClickZoom.disable();
-			m.scrollWheelZoom.disable();
-			m.boxZoom.disable();
+			m.touchZoomRotate.disable();
 			m.keyboard.disable();
-			m.attributionControl.setPrefix("");
+			m.boxZoom.disable();
+			m.dragRotate.disable();
 		}
 
-		m.setView(center, zoom);
-
-		function updateZoomVar() {
-			containerRef.current?.style.setProperty(
-				"--map-zoom",
-				String(m.getZoom()),
-			);
-		}
-		updateZoomVar();
-		m.on("zoomend", updateZoomVar);
-
-		let rafId: number | null = null;
-
-		function readAnimZoom() {
-			const mapPane = m.getPanes().mapPane as HTMLElement;
-			const transformStr = mapPane.style.transform;
-			if (!transformStr) return m.getZoom();
-			const scale = new DOMMatrix(transformStr).a;
-			return scale > 0 ? m.getZoom() + Math.log2(scale) : m.getZoom();
-		}
-
-		function tickAnimZoom() {
-			containerRef.current?.style.setProperty(
-				"--map-zoom-anim",
-				String(readAnimZoom()),
-			);
-			rafId = requestAnimationFrame(tickAnimZoom);
-		}
-
-		function onZoomAnimStart() {
-			if (rafId === null) rafId = requestAnimationFrame(tickAnimZoom);
-		}
-
-		function onZoomAnimEnd() {
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
-			}
+		const updateZoom = () => {
+			containerRef.current?.style.setProperty("--map-zoom", String(m.getZoom()));
+		};
+		const updateAnimZoom = () => {
 			containerRef.current?.style.setProperty(
 				"--map-zoom-anim",
 				String(m.getZoom()),
 			);
-		}
+		};
 
-		containerRef.current.style.setProperty(
-			"--map-zoom-anim",
-			String(m.getZoom()),
-		);
-		m.on("zoomanim", onZoomAnimStart);
-		m.on("zoomend", onZoomAnimEnd);
+		m.on("zoomend", updateZoom);
+		m.on("move", updateAnimZoom);
 
-		function onTouchStart(e: TouchEvent) {
-			if (e.touches.length >= 2 && rafId === null)
-				rafId = requestAnimationFrame(tickAnimZoom);
-		}
-
-		function onTouchEnd(e: TouchEvent) {
-			if (e.touches.length === 0 && rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
-				containerRef.current?.style.setProperty(
-					"--map-zoom-anim",
-					String(m.getZoom()),
-				);
-			}
-		}
-
-		containerRef.current.addEventListener("touchstart", onTouchStart, {
-			passive: true,
+		m.once("load", () => {
+			updateZoom();
+			updateAnimZoom();
+			setMap(m);
 		});
-		containerRef.current.addEventListener("touchend", onTouchEnd, {
-			passive: true,
-		});
-
-		setMap(m);
 
 		return () => {
-			if (rafId !== null) cancelAnimationFrame(rafId);
-			m.off("zoomend", updateZoomVar);
-			m.off("zoomanim", onZoomAnimStart);
-			m.off("zoomend", onZoomAnimEnd);
-			containerRef.current?.removeEventListener("touchstart", onTouchStart);
-			containerRef.current?.removeEventListener("touchend", onTouchEnd);
+			m.off("zoomend", updateZoom);
+			m.off("move", updateAnimZoom);
 			m.remove();
 			setMap(null);
 		};

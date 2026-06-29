@@ -1,32 +1,29 @@
-import { DivIcon, LayerGroup, Marker, type PointTuple } from "leaflet";
+import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
+import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
-
-const SHOW_AT_ZOOM = 18;
 
 type LabelFeature = {
 	properties: { village_number: string };
 	geometry: { type: "Point"; coordinates: [number, number] };
 };
 
-function createNumberIcon(number: string) {
-	return new DivIcon({
-		className: "",
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
-		html: `<div style="
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			font-size: 11px;
-			font-weight: 600;
-			color: #8a6a3a;
-			white-space: nowrap;
-			pointer-events: none;
-			user-select: none;
-			transform: translate(-50%, -50%);
-		">${number}</div>`,
-	});
+function createNumberElement(number: string): HTMLElement {
+	const el = document.createElement("div");
+	// j26-zoom-show-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
+	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
+	el.className = "j26-zoom-show-18";
+	el.style.cssText = `
+		font-size: 11px;
+		font-weight: 600;
+		color: #8a6a3a;
+		white-space: nowrap;
+		pointer-events: none;
+		user-select: none;
+		z-index: 325;
+	`;
+	el.textContent = number;
+	return el;
 }
 
 export function VillageLabelsLayer() {
@@ -42,6 +39,7 @@ export function VillageLabelsLayer() {
 				setLabels(
 					geojson.features.map((f) => ({
 						number: f.properties.village_number,
+						// GeoJSON is [lng, lat], our PointTuple is [lat, lng]
 						position: [f.geometry.coordinates[1], f.geometry.coordinates[0]],
 					})),
 				);
@@ -50,29 +48,21 @@ export function VillageLabelsLayer() {
 
 	useEffect(() => {
 		if (!map || labels.length === 0) return;
-		const mapRef = map;
 
-		const pane = mapRef.createPane("villageLabelsPane");
-		pane.style.zIndex = "325";
-		pane.style.transition = "opacity 250ms";
-		pane.style.opacity = `clamp(0, calc((var(--map-zoom-anim) - ${SHOW_AT_ZOOM - 0.01}) * 9999), 1)`;
-
-		const group = new LayerGroup(
-			labels.map(
-				({ number, position }) =>
-					new Marker(position, {
-						pane: "villageLabelsPane",
-						icon: createNumberIcon(number),
-						interactive: false,
-					}),
-			),
-		);
-
-		mapRef.addLayer(group);
+		const markers = labels.map(({ number, position }) => {
+			// Inner element carries the zoom class; MapLibre's _updateOpacity sets opacity on the
+			// outer wrapper only, so the inner zoom-class opacity is not overridden.
+			const inner = createNumberElement(number);
+			const outer = document.createElement("div");
+			outer.style.cssText = "display:inline-block;pointer-events:none";
+			outer.appendChild(inner);
+			return new maplibregl.Marker({ element: outer, anchor: "center" })
+				.setLngLat([position[1], position[0]])
+				.addTo(map);
+		});
 
 		return () => {
-			mapRef.removeLayer(group);
-			pane.remove();
+			for (const m of markers) m.remove();
 		};
 	}, [map, labels]);
 

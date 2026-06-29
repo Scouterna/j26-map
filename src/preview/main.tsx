@@ -1,13 +1,14 @@
-import { Marker, type PointTuple, TileLayer } from "leaflet";
+import maplibregl from "maplibre-gl";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
-import { MapCanvas, useMap } from "../common/MapCanvas";
-import { createMarkerIcon } from "../common/marker";
-import "../style.css";
 import { getIconURL } from "../common/icons";
+import { type PointTuple, toLngLat } from "../common/locationTypes";
+import { MapCanvas, useMap } from "../common/MapCanvas";
+import { createMarkerElement } from "../common/marker";
+import "../style.css";
 
-export type Props = {
+type Props = {
 	position: PointTuple;
 	iconUrl?: string;
 };
@@ -18,30 +19,14 @@ function TileLoadWatcher({ onLoaded }: { onLoaded: () => void }) {
 	useEffect(() => {
 		if (!map) return;
 
-		let tileLayer: TileLayer | undefined;
-		map.eachLayer((layer) => {
-			if (layer instanceof TileLayer) tileLayer = layer;
-		});
-		if (!tileLayer) return;
-
-		// Capture as const so TypeScript can narrow it correctly
-		const tl = tileLayer as TileLayer & { _loading: boolean };
-
-		let raf: ReturnType<typeof requestAnimationFrame>;
-		const reveal = () => {
-			raf = requestAnimationFrame(onLoaded);
-		};
-
-		if (!tl._loading) {
-			reveal();
-		} else {
-			tl.on("load", reveal);
+		if (map.loaded()) {
+			requestAnimationFrame(onLoaded);
+			return;
 		}
 
-		return () => {
-			tl.off("load", reveal);
-			cancelAnimationFrame(raf);
-		};
+		const handler = () => requestAnimationFrame(onLoaded);
+		map.once("idle", handler);
+		return () => map.off("idle", handler);
 	}, [map, onLoaded]);
 
 	return null;
@@ -52,10 +37,11 @@ function PreviewPin({ position, iconUrl }: Props) {
 
 	useEffect(() => {
 		if (!map) return;
-		const marker = new Marker(position, {
-			icon: createMarkerIcon("#059669", iconUrl),
-			interactive: false,
-		}).addTo(map);
+		const el = createMarkerElement("#059669", iconUrl, 64);
+		el.style.pointerEvents = "none";
+		const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
+			.setLngLat(toLngLat(position))
+			.addTo(map);
 		return () => {
 			marker.remove();
 		};
@@ -86,8 +72,12 @@ function PreviewApp() {
 		);
 	}
 
-	// Shift center slightly north so the pin isn't hidden behind the top edge
-	const center: PointTuple = [lat + 0.00025, lng];
+	const center: PointTuple = [lat, lng];
+
+	// Zoom so 70% of the campsite longitude span (0.042°) fills the viewport width.
+	// Web mercator: pixels = degrees × 256 × 2^z / 360  →  z = log2(w × 360 / (span × 256))
+	const CAMPSITE_LNG_SPAN = 14.157 - 14.115;
+	const zoom = Math.log2((window.innerWidth * 360) / (CAMPSITE_LNG_SPAN * 0.7 * 256));
 
 	const [tilesLoaded, setTilesLoaded] = useState(false);
 	const onLoaded = useCallback(() => setTilesLoaded(true), []);
@@ -96,7 +86,7 @@ function PreviewApp() {
 		<div
 			class={`w-screen h-dvh transition-opacity ${tilesLoaded ? "" : "opacity-0"}`}
 		>
-			<MapCanvas interactive={false} fadeAnimation={false} center={center}>
+			<MapCanvas interactive={false} center={center} zoom={zoom}>
 				<BaseLayers />
 				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />

@@ -1,5 +1,10 @@
-import type { PointTuple } from "leaflet";
 import type { IconVariant } from "./icons";
+
+export type PointTuple = [lat: number, lng: number];
+
+export function toLngLat(pt: PointTuple): [number, number] {
+	return [pt[1], pt[0]];
+}
 
 export type Category = {
 	iconName: string;

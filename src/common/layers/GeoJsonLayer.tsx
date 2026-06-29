@@ -1,162 +1,267 @@
-import { Canvas, SVG, geoJSON, type PathOptions } from "leaflet";
+import type {
+	ExpressionSpecification,
+	FillLayerSpecification,
+	LineLayerSpecification,
+} from "maplibre-gl";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
 
-const GEO_SCALE_BASE_ZOOM = 17.5;
 
-async function rasterizePatternImages(defs: SVGDefsElement) {
-	for (const img of Array.from(defs.querySelectorAll("image"))) {
-		const href = img.getAttribute("href") ?? "";
-		if (!href || href.startsWith("data:")) continue;
-		try {
-			const w = parseFloat(img.getAttribute("width") ?? "256");
-			const h = parseFloat(img.getAttribute("height") ?? "256");
-			const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-				const el = new Image(w, h);
-				el.onload = () => resolve(el);
-				el.onerror = reject;
-				el.src = href;
-			});
-			const canvas = document.createElement("canvas");
-			canvas.width = w;
-			canvas.height = h;
-			const ctx = canvas.getContext("2d");
-			if (!ctx) continue;
-			ctx.drawImage(image, 0, 0, w, h);
-			img.setAttribute("href", canvas.toDataURL("image/png"));
-		} catch {
-			// fall back to original SVG reference
-		}
-	}
-}
+const EMPTY_FC = { type: "FeatureCollection" as const, features: [] };
 
-type BaseProps = {
-	src: string;
-	style?: PathOptions;
-	/** If true, weight scales with zoom so the line covers a fixed geographic area */
-	geoScale?: boolean;
-	/** Feature property to use as a weight multiplier (default: 1) */
-	weightAttribute?: string;
-	/** Fixed pixel amount added to the computed weight, unaffected by scaling */
-	weightOffset?: number;
-	/** Leaflet path simplification factor; 0 = no simplification (default: 1) */
-	smoothFactor?: number;
-	/** SVG <pattern> element string; injected into a hidden body-level SVG so url(#id) resolves across all renderers */
-	patternDef?: string;
-	/** Leaflet pane name; controls z-ordering relative to other layers */
-	pane: string;
-	/** Feature property to use as stroke color */
-	colorAttribute?: string;
-	/** Feature property to use as fillColor */
-	fillColorAttribute?: string;
+type LayerStyle = {
+	color?: string;
+	weight?: number;
+	opacity?: number;
+	fillColor?: string;
+	fillOpacity?: number | ExpressionSpecification;
+	lineCap?: "butt" | "round" | "square";
+	fill?: boolean;
 };
 
-type Props =
-	| (BaseProps & { useCanvas: true; svgPadding?: never })
-	| (BaseProps & { useCanvas?: false; svgPadding: number });
+type Props = {
+	id: string;
+	src: string;
+	style?: LayerStyle;
+	geoScale?: boolean;
+	weightAttribute?: string;
+	weightOffset?: number;
+	patternDef?: string;
+	colorAttribute?: string;
+	fillColorAttribute?: string;
+	maxzoom?: number;
+	minzoom?: number;
+};
+
+async function renderPattern(
+	patternDef: string,
+): Promise<{ imageData: ImageData; id: string }> {
+	const ns = "http://www.w3.org/2000/svg";
+	const doc = new DOMParser().parseFromString(
+		`<svg xmlns="${ns}">${patternDef}</svg>`,
+		"image/svg+xml",
+	);
+	const pattern = doc.querySelector("pattern");
+	if (!pattern) throw new Error("No pattern element");
+
+	const pid = pattern.getAttribute("id") ?? "pattern";
+	const w = parseFloat(pattern.getAttribute("width") ?? "256");
+	const h = parseFloat(pattern.getAttribute("height") ?? "256");
+
+	const canvas = document.createElement("canvas");
+	canvas.width = w;
+	canvas.height = h;
+	const ctx = canvas.getContext("2d")!;
+
+	for (const child of Array.from(pattern.children)) {
+		if (child.tagName === "rect") {
+			ctx.fillStyle = child.getAttribute("fill") ?? "transparent";
+			ctx.fillRect(
+				parseFloat(child.getAttribute("x") ?? "0"),
+				parseFloat(child.getAttribute("y") ?? "0"),
+				parseFloat(child.getAttribute("width") ?? String(w)),
+				parseFloat(child.getAttribute("height") ?? String(h)),
+			);
+		} else if (child.tagName === "image") {
+			const href = child.getAttribute("href") ?? "";
+			const opacity = parseFloat(child.getAttribute("opacity") ?? "1");
+			const iw = parseFloat(child.getAttribute("width") ?? String(w));
+			const ih = parseFloat(child.getAttribute("height") ?? String(h));
+			if (href) {
+				try {
+					const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+						const el = new Image();
+						el.onload = () => resolve(el);
+						el.onerror = reject;
+						el.src = href;
+					});
+					ctx.globalAlpha = opacity;
+					ctx.drawImage(img, 0, 0, iw, ih);
+					ctx.globalAlpha = 1;
+				} catch {
+					// fall back to background color
+				}
+			}
+		}
+	}
+
+	return { imageData: ctx.getImageData(0, 0, w, h), id: pid };
+}
+
+function buildFillPaint(
+	style: LayerStyle | undefined,
+	fillColorAttribute: string | undefined,
+): FillLayerSpecification["paint"] {
+	const paint: FillLayerSpecification["paint"] = {};
+	if (fillColorAttribute) {
+		paint["fill-color"] = [
+			"coalesce",
+			["get", fillColorAttribute],
+			"#888888",
+		] as ExpressionSpecification;
+	} else if (
+		style?.fillColor &&
+		style.fillColor !== "transparent" &&
+		!style.fillColor.startsWith("url(")
+	) {
+		paint["fill-color"] = style.fillColor;
+	}
+	if (style?.fillOpacity !== undefined) {
+		paint["fill-opacity"] = style.fillOpacity;
+	}
+	return paint;
+}
+
+function buildLinePaint(
+	style: LayerStyle | undefined,
+	colorAttribute: string | undefined,
+	geoScale: boolean | undefined,
+	weightAttribute: string | undefined,
+	weightOffset: number,
+): LineLayerSpecification["paint"] {
+	const paint: LineLayerSpecification["paint"] = {};
+
+	if (colorAttribute) {
+		paint["line-color"] = [
+			"coalesce",
+			["get", colorAttribute],
+			"#000000",
+		] as ExpressionSpecification;
+	} else if (style?.color && style.color !== "transparent") {
+		paint["line-color"] = style.color;
+	}
+
+	if (style?.opacity !== undefined) {
+		paint["line-opacity"] = style.opacity;
+	}
+
+	const baseWeight = style?.weight ?? 3;
+	if (geoScale) {
+		if (weightAttribute) {
+			// Composite expression: ["zoom"] must be input to the outermost interpolate.
+			const dataWidth: ExpressionSpecification = [
+				"+",
+				["*", baseWeight, ["coalesce", ["get", weightAttribute], 1]],
+				weightOffset,
+			];
+			paint["line-width"] = [
+				"interpolate", ["exponential", 2], ["zoom"],
+				12, ["*", dataWidth, 0.0221],
+				20, ["*", dataWidth, 5.6569],
+			] as ExpressionSpecification;
+		} else {
+			const w = baseWeight + weightOffset;
+			paint["line-width"] = [
+				"interpolate", ["exponential", 2], ["zoom"],
+				12, w * 0.0221,
+				20, w * 5.6569,
+			] as ExpressionSpecification;
+		}
+	} else {
+		paint["line-width"] = baseWeight;
+	}
+
+	return paint;
+}
 
 export function GeoJsonLayer({
+	id,
 	src,
 	style,
 	geoScale,
 	weightAttribute,
 	weightOffset = 0,
-	smoothFactor,
-	svgPadding,
 	patternDef,
-	pane,
 	colorAttribute,
 	fillColorAttribute,
-	useCanvas,
+	maxzoom,
+	minzoom,
 }: Props) {
 	const map = useMap();
 
 	useEffect(() => {
 		if (!map) return;
-		const m = map;
+
+		const fillId = `${id}-fill`;
+		const lineId = `${id}-line`;
+
+		const needsFill =
+			(style?.fillOpacity ?? 0) > 0 || !!fillColorAttribute || !!patternDef;
+		const needsLine =
+			style?.color !== "transparent" &&
+			(style?.weight === undefined || style.weight > 0);
+
+		// Add source with empty data synchronously so layer order is deterministic
+		map.addSource(id, { type: "geojson", data: EMPTY_FC });
+
+		if (needsFill) {
+			const fillPaint = buildFillPaint(style, fillColorAttribute);
+			const fillSpec: FillLayerSpecification = {
+				id: fillId,
+				type: "fill",
+				source: id,
+				paint: fillPaint,
+			};
+			if (maxzoom !== undefined) fillSpec.maxzoom = maxzoom;
+			if (minzoom !== undefined) fillSpec.minzoom = minzoom;
+			map.addLayer(fillSpec);
+		}
+
+		if (needsLine) {
+			const linePaint = buildLinePaint(
+				style,
+				colorAttribute,
+				geoScale,
+				weightAttribute,
+				weightOffset,
+			);
+			const lineLayout: LineLayerSpecification["layout"] = {};
+			if (style?.lineCap) lineLayout["line-cap"] = style.lineCap;
+			const lineSpec: LineLayerSpecification = {
+				id: lineId,
+				type: "line",
+				source: id,
+				paint: linePaint,
+				layout: lineLayout,
+			};
+			if (maxzoom !== undefined) lineSpec.maxzoom = maxzoom;
+			if (minzoom !== undefined) lineSpec.minzoom = minzoom;
+			map.addLayer(lineSpec);
+		}
 
 		let cancelled = false;
-		let layer: ReturnType<typeof geoJSON> | undefined;
-		let patternHolder: SVGSVGElement | undefined;
-		const baseWeight = style?.weight ?? 3;
+		let addedImageId: string | undefined;
 
-		function getFeatureStyle(feature?: unknown, widthMultiplier = 1): PathOptions {
-			const props = (feature as { properties?: Record<string, unknown> })?.properties ?? {};
-			const scale = geoScale ? 2 ** (m.getZoom() - GEO_SCALE_BASE_ZOOM) : 1;
-			return {
-				...style,
-				weight: (baseWeight * widthMultiplier + weightOffset) * scale,
-				...(colorAttribute && props[colorAttribute] ? { color: props[colorAttribute] as string } : {}),
-				...(fillColorAttribute && props[fillColorAttribute] ? { fillColor: props[fillColorAttribute] as string } : {}),
-			};
-		}
-
-		fetch(src)
-			.then((res) => res.json())
-			.then((data) => {
-				if (cancelled) return;
-
-				layer = geoJSON(data, {
-					// smoothFactor is a PolylineOptions property missing from GeoJSONOptions typings
-					...(smoothFactor !== undefined && ({ smoothFactor } as object)),
-					...(pane && { pane }),
-					...(useCanvas && { renderer: new Canvas({ padding: 1, ...(pane && { pane }) }) }),
-					...(svgPadding !== undefined && { renderer: new SVG({ padding: svgPadding, ...(pane && { pane }) }) }),
-					style: (feature) =>
-						getFeatureStyle(
-							feature,
-							weightAttribute
-								? ((feature?.properties as Record<string, unknown>)?.[weightAttribute] as number) ?? 1
-								: 1,
-						),
-				}).addTo(m);
-
-				if (patternDef) {
-					// Inject into a hidden <svg> at document body level so url(#id) resolves
-					// across all SVG elements in the document, regardless of which Leaflet renderer
-					// owns the path.
-					const ns = "http://www.w3.org/2000/svg";
-					patternHolder = document.createElementNS(ns, "svg") as SVGSVGElement;
-					patternHolder.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden");
-					patternHolder.setAttribute("aria-hidden", "true");
-					const defs = document.createElementNS(ns, "defs") as SVGDefsElement;
-					patternHolder.appendChild(defs);
-					document.body.appendChild(patternHolder);
-
-					const doc = new DOMParser().parseFromString(
-						`<svg xmlns="${ns}">${patternDef}</svg>`,
-						"image/svg+xml",
-					);
-					const el = doc.documentElement.firstElementChild;
-					if (el) defs.appendChild(document.importNode(el, true));
-
-					// Pre-rasterize any SVG <image> elements in the pattern to PNG data URLs.
-					// This lets the browser cache a bitmap tile instead of re-rendering the
-					// SVG vector on every paint, which is a major source of zoom lag.
-					void rasterizePatternImages(defs);
+		async function loadData() {
+			if (patternDef && needsFill) {
+				try {
+					const { imageData, id: pid } = await renderPattern(patternDef);
+					if (cancelled) return;
+					if (!map.hasImage(pid)) {
+						map.addImage(pid, imageData);
+						addedImageId = pid;
+					}
+					map.setPaintProperty(fillId, "fill-pattern", pid);
+				} catch {
+					// keep solid fill color as fallback
 				}
-			});
+			}
 
-		function onZoom() {
-			layer?.setStyle((feature) =>
-				getFeatureStyle(
-					feature,
-					weightAttribute
-						? ((feature?.properties as Record<string, unknown>)?.[weightAttribute] as number) ?? 1
-						: 1,
-				),
-			);
+			const data = await fetch(src).then((r) => r.json());
+			if (cancelled) return;
+			(map.getSource(id) as maplibregl.GeoJSONSource).setData(data);
 		}
 
-		if (geoScale) m.on("zoomend", onZoom);
+		loadData();
 
 		return () => {
 			cancelled = true;
-			patternHolder?.remove();
-			layer?.remove();
-			m.off("zoomend", onZoom);
+			if (needsLine && map.getLayer(lineId)) map.removeLayer(lineId);
+			if (needsFill && map.getLayer(fillId)) map.removeLayer(fillId);
+			if (map.getSource(id)) map.removeSource(id);
+			if (addedImageId && map.hasImage(addedImageId)) map.removeImage(addedImageId);
 		};
-	}, [map, src, style, geoScale, weightAttribute, colorAttribute, fillColorAttribute, patternDef, pane, useCanvas]);
+	}, [map]);
 
 	return null;
 }

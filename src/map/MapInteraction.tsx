@@ -1,22 +1,15 @@
 import type { Feature } from "geojson";
-import { GeoJSON, type Map as LMap, type PointTuple } from "leaflet";
+import maplibregl from "maplibre-gl";
 import { useEffect, useRef } from "preact/hooks";
+import type { PointTuple } from "../common/locationTypes";
+import { toLngLat } from "../common/locationTypes";
 import { useMap } from "../common/MapCanvas";
 import type { SearchResult } from "../common/searchTypes";
 
-/** Shift a lat/lng so it appears in the center of the area above the bottom sheet. */
-function sheetAdjustedCenter(
-	map: LMap,
-	latLng: PointTuple,
-	zoom: number,
-	sheetH: number,
-): PointTuple {
-	const shiftPx = sheetH / 2;
-	const px = map.project(latLng, zoom).add([0, shiftPx]);
-	const adjusted = map.unproject(px, zoom);
-	return [adjusted.lat, adjusted.lng];
-}
+const HIGHLIGHT_SOURCE = "village-highlight";
+const HIGHLIGHT_LAYER = "village-highlight-line";
 
+// Returns [[minLng, minLat], [maxLng, maxLat]] for use with MapLibre fitBounds
 function featureBounds(
 	feature: Feature,
 ): [[number, number], [number, number]] | null {
@@ -40,8 +33,8 @@ function featureBounds(
 		if (lng > maxLng) maxLng = lng;
 	}
 	return [
-		[minLat, minLng],
-		[maxLat, maxLng],
+		[minLng, minLat],
+		[maxLng, maxLat],
 	];
 }
 
@@ -52,65 +45,73 @@ type Props = {
 
 export function MapInteraction({ selectedResult, getSheetHeight }: Props) {
 	const map = useMap();
-	const highlightRef = useRef<GeoJSON | null>(null);
+	const highlightRef = useRef(false);
 
 	useEffect(() => {
 		if (!map) return;
 
+		// Remove previous highlight
 		if (highlightRef.current) {
-			map.removeLayer(highlightRef.current);
-			highlightRef.current = null;
+			if (map.getLayer(HIGHLIGHT_LAYER)) map.removeLayer(HIGHLIGHT_LAYER);
+			if (map.getSource(HIGHLIGHT_SOURCE)) map.removeSource(HIGHLIGHT_SOURCE);
+			highlightRef.current = false;
 		}
 
 		if (!selectedResult) return;
 
 		const sheetH = getSheetHeight();
-		const fitOpts = {
-			paddingTopLeft: [60, 60] as [number, number],
-			paddingBottomRight: [60, 60 + sheetH] as [number, number],
+		const fitPadding = {
+			top: 60,
+			bottom: 60 + sheetH,
+			left: 60,
+			right: 60,
 		};
 
 		if (selectedResult.type === "location") {
-			const center = sheetAdjustedCenter(
-				map,
-				selectedResult.location.position,
-				18,
-				sheetH,
-			);
-			map.flyTo(center, 18);
+			map.flyTo({
+				center: toLngLat(selectedResult.location.position),
+				zoom: 18,
+				// Negative Y shifts target above viewport center so pin is centered above the sheet
+				offset: [0, -(sheetH / 2)] as [number, number],
+			});
 		} else if (selectedResult.type === "group") {
 			const positions = selectedResult.locations.map((l) => l.position);
 			if (positions.length > 0) {
 				const lats = positions.map((p) => p[0]);
 				const lngs = positions.map((p) => p[1]);
-				map.fitBounds(
-					[
-						[Math.min(...lats), Math.min(...lngs)],
-						[Math.max(...lats), Math.max(...lngs)],
-					],
-					{ ...fitOpts, maxZoom: 18 },
-				);
+				const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
+				const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
+				map.fitBounds([sw, ne], { padding: fitPadding, maxZoom: 18 });
 			}
 		} else if (selectedResult.type === "district") {
 			const bounds = featureBounds(selectedResult.feature);
-			if (bounds) map.fitBounds(bounds, fitOpts);
+			if (bounds) map.fitBounds(bounds, { padding: fitPadding });
 		} else if (selectedResult.type === "village") {
-			const center = sheetAdjustedCenter(map, selectedResult.labelPoint, 18, sheetH);
-			map.flyTo(center, 18);
+			map.flyTo({
+				center: toLngLat(selectedResult.labelPoint as PointTuple),
+				zoom: 18,
+				offset: [0, -(sheetH / 2)] as [number, number],
+			});
 			if (selectedResult.polygon) {
-				// biome-ignore lint/suspicious/noExplicitAny: Leaflet GeoJSON accepts Feature but types are loose
-				const layer = new GeoJSON(selectedResult.polygon as any, {
-					style: () => ({ color: "#2563eb", weight: 3, fillOpacity: 0 }),
+				map.addSource(HIGHLIGHT_SOURCE, {
+					type: "geojson",
+					data: selectedResult.polygon as GeoJSON.Feature,
 				});
-				layer.addTo(map);
-				highlightRef.current = layer;
+				map.addLayer({
+					id: HIGHLIGHT_LAYER,
+					type: "line",
+					source: HIGHLIGHT_SOURCE,
+					paint: { "line-color": "#2563eb", "line-width": 3 },
+				});
+				highlightRef.current = true;
 			}
 		}
 
 		return () => {
 			if (highlightRef.current) {
-				map.removeLayer(highlightRef.current);
-				highlightRef.current = null;
+				if (map.getLayer(HIGHLIGHT_LAYER)) map.removeLayer(HIGHLIGHT_LAYER);
+				if (map.getSource(HIGHLIGHT_SOURCE)) map.removeSource(HIGHLIGHT_SOURCE);
+				highlightRef.current = false;
 			}
 		};
 	}, [selectedResult, map, getSheetHeight]);
