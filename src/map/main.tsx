@@ -4,7 +4,7 @@ import SearchIcon from "@tabler/icons/outline/search.svg?raw";
 import { AnimatePresence } from "motion/react";
 import { render } from "preact";
 import { memo } from "preact/compat";
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
 import { UserLocationLayer } from "../common/layers/UserLocationLayer";
@@ -64,6 +64,22 @@ function MapApp() {
 		sheetHeightRef.current = h;
 	}, []);
 	const getSheetHeight = useCallback(() => sheetHeightRef.current, []);
+
+	// Push a history entry when search opens so the Android back button closes it.
+	// When search closes via UI, consume that entry with history.back().
+	useEffect(() => {
+		if (searchActive) {
+			history.pushState({ searchOpen: true }, "");
+		} else if (history.state?.searchOpen) {
+			history.back();
+		}
+	}, [searchActive]);
+
+	useEffect(() => {
+		const handlePopState = () => setSearchActive(false);
+		window.addEventListener("popstate", handlePopState);
+		return () => window.removeEventListener("popstate", handlePopState);
+	}, []);
 
 	const handleResultClick = useCallback((result: SearchResult) => {
 		// Scout group results navigate to their village
