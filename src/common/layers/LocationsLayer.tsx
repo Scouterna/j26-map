@@ -12,6 +12,8 @@ import { SVG_BADGE_WIDTH, createMarkerElement, createSvgBadgeMarker } from "../m
 // the outer wrapper (opacity always 1), our class controls the inner element's opacity.
 const PIN_CLASS = "j26-zoom-show-16-5";
 const LABEL_CLASS = "j26-zoom-show-17";
+// Must match the threshold in j26-zoom-show-16-5 (opacity goes to 0 below this zoom).
+const PIN_ZOOM_THRESHOLD = 16.5;
 
 const MARKER_SIZE = 32;
 // Transparent touch bridge between pin tip and label, in px.
@@ -138,13 +140,33 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 				outer.style.pointerEvents = visible ? "auto" : "none";
 			}
 		} else {
-			for (const { outer, pinInner, labelInner } of entries.values()) {
+			for (const { pinInner, labelInner } of entries.values()) {
 				pinInner.style.removeProperty("opacity");
 				labelInner.style.removeProperty("opacity");
-				outer.style.pointerEvents = "auto";
+				// pointer-events reset is handled by the zoom effect below
 			}
 		}
 	}, [visibleIds]);
+
+	// Disable pointer-events on hidden markers (zoom < threshold) when not in filtered mode.
+	useEffect(() => {
+		if (!map || visibleIds !== null) return;
+
+		const applyZoomPointerEvents = () => {
+			const zoom = map.getZoom();
+			for (const [id, { outer }] of markersRef.current) {
+				const forceVisible = forceVisibleIds?.has(id) ?? false;
+				outer.style.pointerEvents = zoom >= PIN_ZOOM_THRESHOLD || forceVisible ? "auto" : "none";
+			}
+		};
+
+		map.on("zoomend", applyZoomPointerEvents);
+		applyZoomPointerEvents();
+
+		return () => {
+			map.off("zoomend", applyZoomPointerEvents);
+		};
+	}, [map, visibleIds, forceVisibleIds, locations]);
 
 	return null;
 }
