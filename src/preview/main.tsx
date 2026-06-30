@@ -92,6 +92,7 @@ function PreviewApp() {
 				osmTiles={false}
 				center={center}
 				zoom={zoom}
+				attribution={false}
 			>
 				<BaseLayers />
 				<TileLoadWatcher onLoaded={onLoaded} />
