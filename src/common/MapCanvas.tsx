@@ -70,6 +70,7 @@ export function MapCanvas({
 		});
 
 		if (interactive) {
+			m.touchZoomRotate.disableRotation();
 			m.addControl(
 				new maplibregl.NavigationControl({ showCompass: false }),
 				"bottom-right",
