@@ -53,7 +53,7 @@ export function MapCanvas({
 			tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
 			tileSize: 256,
 			attribution:
-				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+				'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
 			minzoom: 10,
 			maxzoom: 19,
 		};
