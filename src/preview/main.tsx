@@ -72,7 +72,7 @@ function PreviewApp() {
 		);
 	}
 
-	const center: PointTuple = [lat + 0.00015, lng];
+	const center: PointTuple = [lat + 0.00005, lng];
 
 	// Zoom so 70% of the campsite longitude span (0.042°) fills the viewport width.
 	// Web mercator: pixels = degrees × 256 × 2^z / 360  →  z = log2(w × 360 / (span × 256))
@@ -87,7 +87,12 @@ function PreviewApp() {
 		<div
 			class={`w-screen h-dvh transition-opacity ${tilesLoaded ? "" : "opacity-0"}`}
 		>
-			<MapCanvas interactive={false} osmTiles={false} attribution={false} center={center} zoom={zoom}>
+			<MapCanvas
+				interactive={false}
+				osmTiles={false}
+				center={center}
+				zoom={zoom}
+			>
 				<BaseLayers />
 				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />
