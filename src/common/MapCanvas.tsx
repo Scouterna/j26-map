@@ -24,6 +24,8 @@ type Props = {
 	class?: string;
 	children?: ComponentChildren;
 	interactive?: boolean;
+	osmTiles?: boolean;
+	attribution?: boolean;
 	center?: PointTuple;
 	zoom?: number;
 };
@@ -32,6 +34,8 @@ export function MapCanvas({
 	class: className,
 	children,
 	interactive = true,
+	osmTiles = true,
+	attribution = true,
 	center = DEFAULT_CENTER,
 	zoom = DEFAULT_ZOOM,
 }: Props) {
@@ -44,22 +48,24 @@ export function MapCanvas({
 		containerRef.current.style.setProperty("--map-zoom", String(zoom));
 		containerRef.current.style.setProperty("--map-zoom-anim", String(zoom));
 
+		const osmSource: maplibregl.SourceSpecification = {
+			type: "raster",
+			tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+			tileSize: 256,
+			attribution:
+				'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+			minzoom: 10,
+			maxzoom: 19,
+		};
+
 		const m = new maplibregl.Map({
 			container: containerRef.current,
 			style: {
 				version: 8,
-				sources: {
-					osm: {
-						type: "raster",
-						tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-						tileSize: 256,
-						attribution:
-							'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-						minzoom: 10,
-						maxzoom: 19,
-					},
-				},
-				layers: [{ id: "osm-tiles", type: "raster", source: "osm" }],
+				sources: osmTiles ? { osm: osmSource } : {},
+				layers: osmTiles
+					? [{ id: "osm-tiles", type: "raster", source: "osm" }]
+					: [],
 			},
 			center: [center[1], center[0]], // [lng, lat]
 			zoom,
@@ -67,6 +73,7 @@ export function MapCanvas({
 			...(interactive && { minZoom: 14, maxZoom: 19 }),
 			dragRotate: false,
 			touchPitch: false,
+			attributionControl: attribution,
 		});
 
 		if (interactive) {
@@ -86,7 +93,10 @@ export function MapCanvas({
 		}
 
 		const updateZoom = () => {
-			containerRef.current?.style.setProperty("--map-zoom", String(m.getZoom()));
+			containerRef.current?.style.setProperty(
+				"--map-zoom",
+				String(m.getZoom()),
+			);
 		};
 		const updateAnimZoom = () => {
 			containerRef.current?.style.setProperty(

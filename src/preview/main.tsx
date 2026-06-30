@@ -37,7 +37,7 @@ function PreviewPin({ position, iconUrl }: Props) {
 
 	useEffect(() => {
 		if (!map) return;
-		const el = createMarkerElement("#059669", iconUrl, 64);
+		const el = createMarkerElement("#059669", iconUrl);
 		el.style.pointerEvents = "none";
 		const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
 			.setLngLat(toLngLat(position))
@@ -72,12 +72,13 @@ function PreviewApp() {
 		);
 	}
 
-	const center: PointTuple = [lat, lng];
+	const center: PointTuple = [lat + 0.00015, lng];
 
 	// Zoom so 70% of the campsite longitude span (0.042°) fills the viewport width.
 	// Web mercator: pixels = degrees × 256 × 2^z / 360  →  z = log2(w × 360 / (span × 256))
 	const CAMPSITE_LNG_SPAN = 14.157 - 14.115;
-	const zoom = Math.log2((window.innerWidth * 360) / (CAMPSITE_LNG_SPAN * 0.7 * 256));
+	const zoom =
+		Math.log2((window.innerWidth * 360) / (CAMPSITE_LNG_SPAN * 0.7 * 256)) + 1;
 
 	const [tilesLoaded, setTilesLoaded] = useState(false);
 	const onLoaded = useCallback(() => setTilesLoaded(true), []);
@@ -86,7 +87,7 @@ function PreviewApp() {
 		<div
 			class={`w-screen h-dvh transition-opacity ${tilesLoaded ? "" : "opacity-0"}`}
 		>
-			<MapCanvas interactive={false} center={center} zoom={zoom}>
+			<MapCanvas interactive={false} osmTiles={false} attribution={false} center={center} zoom={zoom}>
 				<BaseLayers />
 				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />
