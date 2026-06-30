@@ -138,23 +138,22 @@ function buildLinePaint(
 	const baseWeight = style?.weight ?? 3;
 	if (geoScale) {
 		if (weightAttribute) {
-			// Composite expression: ["zoom"] must be input to the outermost interpolate.
 			const dataWidth: ExpressionSpecification = [
 				"+",
 				["*", baseWeight, ["coalesce", ["get", weightAttribute], 1]],
 				weightOffset,
 			];
 			paint["line-width"] = [
-				"interpolate", ["exponential", 2], ["zoom"],
-				12, ["*", dataWidth, 0.0221],
-				20, ["*", dataWidth, 5.6569],
+				"interpolate", ["linear"], ["zoom"],
+				14, ["*", dataWidth, 0.2],
+				19, ["*", dataWidth, 2.0],
 			] as ExpressionSpecification;
 		} else {
 			const w = baseWeight + weightOffset;
 			paint["line-width"] = [
-				"interpolate", ["exponential", 2], ["zoom"],
-				12, w * 0.0221,
-				20, w * 5.6569,
+				"interpolate", ["linear"], ["zoom"],
+				14, w * 0.2,
+				19, w * 2.0,
 			] as ExpressionSpecification;
 		}
 	} else {
