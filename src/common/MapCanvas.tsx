@@ -62,6 +62,7 @@ export function MapCanvas({
 			container: containerRef.current,
 			style: {
 				version: 8,
+				glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
 				sources: osmTiles ? { osm: osmSource } : {},
 				layers: osmTiles
 					? [{ id: "osm-tiles", type: "raster", source: "osm" }]

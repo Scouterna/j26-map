@@ -1,6 +1,7 @@
 import { memo } from "preact/compat";
 import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
+import { RoadLabelsLayer } from "./layers/RoadLabelsLayer";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 
 export const BaseLayers = memo(function BaseLayers() {
@@ -70,6 +71,7 @@ export const BaseLayers = memo(function BaseLayers() {
 				geoScale
 				weightAttribute="width"
 			/>
+			<RoadLabelsLayer />
 			<GeoJsonLayer
 				id="tents"
 				src="./layers/tents.geojson"
