@@ -118,7 +118,7 @@ const OSM_LAYERS: maplibregl.LayerSpecification[] = [
 		layout: {
 			"symbol-placement": "line",
 			"text-field": ["get", "name"],
-			"text-font": ["Open Sans Regular"],
+			"text-font": ["Klokantech Noto Sans Regular"],
 			"text-size": 11,
 		},
 		paint: {
@@ -174,7 +174,7 @@ export function MapCanvas({
 			container: containerRef.current,
 			style: {
 				version: 8,
-				glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
+				glyphs: "./fonts/{fontstack}/{range}.pbf",
 				sources: osmTiles ? { osm: osmSource } : {},
 				layers: osmTiles ? OSM_LAYERS : [],
 			},

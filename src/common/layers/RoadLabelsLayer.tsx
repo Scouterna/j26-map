@@ -24,7 +24,7 @@ export function RoadLabelsLayer() {
 			layout: {
 				"symbol-placement": "line",
 				"text-field": ["get", "name"],
-				"text-font": ["Open Sans Regular"],
+				"text-font": ["Klokantech Noto Sans Regular"],
 				"text-size": ["interpolate", ["linear"], ["zoom"], 14, 9, 17, 11, 19, 14],
 				"text-max-angle": 30,
 				"symbol-spacing": 300,
