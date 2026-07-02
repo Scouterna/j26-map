@@ -14,14 +14,6 @@ export type Category = {
 
 export type OpeningHourSlot = { from: string; to: string };
 
-export type Aktivitet = {
-	id: string;
-	name: string;
-	from: string;
-	to: string;
-	description?: string;
-};
-
 export type Location = {
 	id: string;
 	name: string;
@@ -31,5 +23,4 @@ export type Location = {
 	markerSvg?: string;
 	markerSvgAspectRatio?: number;
 	openingHours?: Record<string, OpeningHourSlot[]>;
-	aktiviteter?: Record<string, Aktivitet[]>;
 };

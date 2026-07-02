@@ -1,6 +1,7 @@
 import type { Feature, FeatureCollection } from "geojson";
 import MiniSearch from "minisearch";
 import { getLocations } from "./locationService";
+import { getLocationTagNames } from "./locationTagService";
 import type { Location } from "./locationTypes";
 import type { SearchResult } from "./searchTypes";
 import { getVillageEntries, type VillageEntry } from "./villageService";
@@ -34,17 +35,17 @@ function normalize(s: string): string {
 }
 
 async function buildIndex(): Promise<SearchIndex> {
-	const [locations, groupsRaw, villages, districtsRaw, scoutGroupsRaw] = await Promise.all([
+	const [locations, tagNames, villages, districtsRaw, scoutGroupsRaw] = await Promise.all([
 		getLocations(),
-		fetch("./location-groups.json").then((r) => r.json() as Promise<Record<string, string>>),
+		getLocationTagNames(),
 		getVillageEntries(),
 		fetch("./layers/districts.geojson").then((r) => r.json() as Promise<FeatureCollection>),
 		fetch("./scout-groups.json").then((r) => r.json() as Promise<Array<{ name: string; village: string }>>),
 	]);
 
-	// Build group map: tag → { displayName, locations[] }
+	// Build group map: tag id → { displayName, locations[] }
 	const groups = new Map<string, { displayName: string; locations: Location[] }>();
-	for (const [tag, displayName] of Object.entries(groupsRaw)) {
+	for (const [tag, displayName] of tagNames) {
 		groups.set(tag, { displayName, locations: [] });
 	}
 	for (const loc of locations) {

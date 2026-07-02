@@ -2,21 +2,13 @@ import { ScoutButton } from "@scouterna/ui-react";
 import XIcon from "@tabler/icons/outline/x.svg?raw";
 import { motion, useAnimation, useMotionValue } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
-import { getGroupsForVillage } from "../common/scoutGroupService";
 import { getIconURL } from "../common/icons";
-import type { Aktivitet, Location, OpeningHourSlot } from "../common/locationTypes";
+import { getLocationTagNames } from "../common/locationTagService";
+import type { Location, OpeningHourSlot } from "../common/locationTypes";
+import { getGroupsForVillage } from "../common/scoutGroupService";
 import type { SearchResult } from "../common/searchTypes";
 
-const GROUP_LABELS: Record<string, string> = {
-	wc: "Toaletter",
-	hwc: "Handikapptoaletter",
-	shower: "Duschar",
-	"shower-wc": "Dusch & Toalett",
-	slanforrad: "Slanförråd",
-};
-
 const TODAY = new Date().toISOString().slice(0, 10);
-const MAX_PREVIEW_AKTIVITETER = 3;
 
 type Props = {
 	result: SearchResult;
@@ -47,44 +39,16 @@ function OpeningHours({ slots }: { slots: OpeningHourSlot[] }) {
 	);
 }
 
-function AktivitetRow({ aktivitet }: { aktivitet: Aktivitet }) {
-	return (
-		<div class="flex items-start gap-3 px-4 py-2.5">
-			<span class="text-xs font-mono text-gray-400 pt-0.5 shrink-0 w-[88px]">
-				{aktivitet.from}–{aktivitet.to}
-			</span>
-			<span class="text-sm font-medium leading-snug">{aktivitet.name}</span>
-		</div>
-	);
-}
-
-function AktiviteterSection({ location }: { location: Location }) {
-	const all = location.aktiviteter?.[TODAY] ?? [];
-	if (all.length === 0) return null;
-
-	const preview = all.slice(0, MAX_PREVIEW_AKTIVITETER);
-	const remaining = all.length - preview.length;
-
-	return (
-		<div class="border-t border-gray-100 pt-1 mt-1">
-			<h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-2">
-				Aktiviteter idag
-			</h3>
-			{preview.map((a) => <AktivitetRow key={a.id} aktivitet={a} />)}
-			{remaining > 0 && (
-				<button
-					type="button"
-					class="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-600 hover:underline"
-				>
-					Visa alla {all.length} aktiviteter →
-				</button>
-			)}
-		</div>
-	);
-}
-
 function LocationBody({ location }: { location: Location }) {
-	const tagLabels = location.tags.map((t) => GROUP_LABELS[t]).filter(Boolean);
+	const [tagNames, setTagNames] = useState<Map<string, string> | null>(null);
+
+	useEffect(() => {
+		getLocationTagNames().then(setTagNames);
+	}, []);
+
+	const tagLabels = (tagNames ? location.tags.map((t) => tagNames.get(t)) : []).filter(
+		(label): label is string => !!label,
+	);
 	const todayHours = location.openingHours?.[TODAY];
 
 	return (
@@ -99,10 +63,7 @@ function LocationBody({ location }: { location: Location }) {
 					))}
 				</div>
 			)}
-			<AktiviteterSection location={location} />
-			{!todayHours && tagLabels.length === 0 && !location.aktiviteter?.[TODAY]?.length && (
-				<div class="h-4" />
-			)}
+			{!todayHours && tagLabels.length === 0 && <div class="h-4" />}
 		</div>
 	);
 }

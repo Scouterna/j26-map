@@ -1,0 +1,5 @@
+{
+	"heartbeat_cafe": { "src": "./logos/heartbeat_cafe.svg", "aspectRatio": 2.923 },
+	"josbaren": { "src": "./logos/josbaren.svg", "aspectRatio": 2.882 },
+	"food_house": { "src": "./logos/food_house.svg", "aspectRatio": 1.491 }
+}
