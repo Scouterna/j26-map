@@ -193,6 +193,13 @@ export function MapCanvas({
 				new maplibregl.NavigationControl({ showCompass: false }),
 				"bottom-right",
 			);
+			m.addControl(
+				new maplibregl.GeolocateControl({
+					positionOptions: { enableHighAccuracy: true },
+					trackUserLocation: true,
+				}),
+				"bottom-right",
+			);
 		} else {
 			m.dragPan.disable();
 			m.scrollZoom.disable();
