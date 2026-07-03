@@ -26,3 +26,5 @@ dist-ssr
 # J26 CLI
 .j26
 .j26.local.yaml
+
+.env

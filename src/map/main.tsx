@@ -1,6 +1,7 @@
 import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
 import ArrowLeftIcon from "@tabler/icons/outline/arrow-left.svg?raw";
 import SearchIcon from "@tabler/icons/outline/search.svg?raw";
+import { TolgeeProvider, useTranslate } from "@tolgee/react";
 import { AnimatePresence } from "motion/react";
 import { render } from "preact";
 import { memo } from "preact/compat";
@@ -10,6 +11,7 @@ import { LocationsLayer } from "../common/layers/LocationsLayer";
 import type { Location } from "../common/locationTypes";
 import { MapCanvas } from "../common/MapCanvas";
 import type { SearchResult } from "../common/searchTypes";
+import { tolgee } from "../common/tolgee";
 import { useAppBarTitle } from "../common/use-app-bar-title";
 import "../style.css";
 import { BottomSheet } from "./BottomSheet";
@@ -36,8 +38,16 @@ const MapView = memo(function MapView({
 			<BaseLayers />
 			<LocationsLayer
 				onLocationClick={onLocationClick}
-				activeId={selectedResult?.type === "location" ? selectedResult.location.id : null}
-				forceVisibleIds={selectedResult?.type === "group" ? new Set(selectedResult.locations.map((l) => l.id)) : null}
+				activeId={
+					selectedResult?.type === "location"
+						? selectedResult.location.id
+						: null
+				}
+				forceVisibleIds={
+					selectedResult?.type === "group"
+						? new Set(selectedResult.locations.map((l) => l.id))
+						: null
+				}
 			/>
 			<MapInteraction
 				selectedResult={selectedResult}
@@ -50,7 +60,8 @@ const MapView = memo(function MapView({
 });
 
 function MapApp() {
-	useAppBarTitle("Karta");
+	const { t } = useTranslate("map");
+	useAppBarTitle(t("appBar.title"));
 
 	const [searchActive, setSearchActive] = useState(false);
 	const [searchValue, setSearchValue] = useState("");
@@ -112,11 +123,11 @@ function MapApp() {
 					`}
 					onClick={() => setSearchActive(false)}
 				>
-					Tillbaka
+					{t("search.back")}
 				</ScoutButton>
 				<ScoutInput
 					className="flex-1"
-					placeholder="Sök efter platser, områden, kårer..."
+					placeholder={t("search.placeholder")}
 					icon={SearchIcon}
 					clearable
 					onFocus={() => setSearchActive(true)}
@@ -155,5 +166,13 @@ function MapApp() {
 	);
 }
 
-// biome-ignore lint/style/noNonNullAssertion: It's guaranteed to be there.
-render(<MapApp />, document.getElementById("app")!);
+const appElement =
+	// biome-ignore lint/style/noNonNullAssertion: It's guaranteed to be there.
+	document.getElementById("app")!;
+
+render(
+	<TolgeeProvider tolgee={tolgee} options={{ useSuspense: false }}>
+		<MapApp />
+	</TolgeeProvider>,
+	appElement,
+);

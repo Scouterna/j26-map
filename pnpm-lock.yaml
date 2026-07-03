@@ -26,6 +26,12 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.2.1
         version: 4.2.1(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.31.1))
+      '@tolgee/format-icu':
+        specifier: ^7.1.1
+        version: 7.1.1
+      '@tolgee/react':
+        specifier: ^7.1.1
+        version: 7.1.1(react@19.2.4)
       maplibre-gl:
         specifier: ^5.24.0
         version: 5.24.0
@@ -794,6 +800,20 @@ packages:
     resolution: {integrity: sha512-TBf2sJjYeb28jD2U/OhwdW0bbOsxkWPwQ7SrqGf9sVcoYwZj7rkXljroBO9wKBut9XnmQLXanuDUeqQK0lGg/w==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
+
+  '@tolgee/core@7.1.1':
+    resolution: {integrity: sha512-RsrFJwFUyeI29BnLVNMSLDyPaAUWZGrF/LU1QUTZ13BACV+cW8wuqD/WwaDhlv3az+AFiCXVbhCi+cmlJUuc5g==}
+
+  '@tolgee/format-icu@7.1.1':
+    resolution: {integrity: sha512-BkkvEabz5zv3KPqBcTqk4lYxaYtiC2wJXk8SBqzYUu/9112ECv9ZgXoob/vh0Fd63IJIdtTQ83/oBfVCHv/43A==}
+
+  '@tolgee/react@7.1.1':
+    resolution: {integrity: sha512-UbwcRe75HHkDIsNuhB+IJZNtYTfqtty2tXP+z4RFjNlFmJ7HO+FxUpnr3nh5St6r5x4rrqPjJnjYOuJmMpSPNw==}
+    peerDependencies:
+      react: ^16.14.0 || ^17.0.1 || ^18.1.0 || ^19
+
+  '@tolgee/web@7.1.1':
+    resolution: {integrity: sha512-ymMgbAIASrYJD1EGxj8Vt7NMltqVALEE2vqmXfsffrBvBfkloaNZ5fMMvDykoMLHThq9xgZFPWLrjLdIr9Z80A==}
 
   '@ts-morph/common@0.23.0':
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
@@ -2019,6 +2039,19 @@ snapshots:
       '@tailwindcss/oxide': 4.2.1
       tailwindcss: 4.2.1
       vite: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.31.1)
+
+  '@tolgee/core@7.1.1': {}
+
+  '@tolgee/format-icu@7.1.1': {}
+
+  '@tolgee/react@7.1.1(react@19.2.4)':
+    dependencies:
+      '@tolgee/web': 7.1.1
+      react: 19.2.4
+
+  '@tolgee/web@7.1.1':
+    dependencies:
+      '@tolgee/core': 7.1.1
 
   '@ts-morph/common@0.23.0':
     dependencies:

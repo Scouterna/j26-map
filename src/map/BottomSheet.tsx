@@ -1,5 +1,6 @@
 import { ScoutButton } from "@scouterna/ui-react";
 import XIcon from "@tabler/icons/outline/x.svg?raw";
+import { useTranslate } from "@tolgee/react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../common/icons";
@@ -17,24 +18,56 @@ type Props = {
 	onHeightChange: (height: number) => void;
 };
 
-function SheetIcon({ iconName, variant = "outline", size = 24 }: { iconName: string; variant?: "outline" | "filled"; size?: number }) {
+function SheetIcon({
+	iconName,
+	variant = "outline",
+	size = 24,
+}: {
+	iconName: string;
+	variant?: "outline" | "filled";
+	size?: number;
+}) {
 	return (
-		<img src={getIconURL(iconName, variant)} width={size} height={size} class="shrink-0 opacity-80" alt="" />
+		<img
+			src={getIconURL(iconName, variant)}
+			width={size}
+			height={size}
+			class="shrink-0 opacity-80"
+			alt=""
+		/>
 	);
 }
 
 function AccentStrip({ color }: { color: string }) {
-	return <div class="rounded-t-2xl h-1.5 w-full" style={{ backgroundColor: color }} />;
+	return (
+		<div
+			class="rounded-t-2xl h-1.5 w-full"
+			style={{ backgroundColor: color }}
+		/>
+	);
 }
 
 function OpeningHours({ slots }: { slots: OpeningHourSlot[] }) {
+	const { t } = useTranslate("map");
 	const text = slots.map((s) => `${s.from}–${s.to}`).join(", ");
 	return (
 		<div class="flex items-center gap-1.5 px-4 pb-2 text-sm text-gray-500">
-			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
-				<circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="shrink-0"
+			>
+				<circle cx="12" cy="12" r="10" />
+				<polyline points="12 6 12 12 16 14" />
 			</svg>
-			<span>Öppet {text}</span>
+			<span>{t("bottomSheet.openingHours", { hours: text })}</span>
 		</div>
 	);
 }
@@ -46,9 +79,9 @@ function LocationBody({ location }: { location: Location }) {
 		getLocationTagNames().then(setTagNames);
 	}, []);
 
-	const tagLabels = (tagNames ? location.tags.map((t) => tagNames.get(t)) : []).filter(
-		(label): label is string => !!label,
-	);
+	const tagLabels = (
+		tagNames ? location.tags.map((t) => tagNames.get(t)) : []
+	).filter((label): label is string => !!label);
 	const todayHours = location.openingHours?.[TODAY];
 
 	return (
@@ -57,7 +90,10 @@ function LocationBody({ location }: { location: Location }) {
 			{tagLabels.length > 0 && (
 				<div class="flex flex-wrap gap-2 px-4 pb-3">
 					{tagLabels.map((label) => (
-						<span key={label} class="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
+						<span
+							key={label}
+							class="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600"
+						>
 							{label}
 						</span>
 					))}
@@ -69,6 +105,7 @@ function LocationBody({ location }: { location: Location }) {
 }
 
 function VillageBody({ villageNumber }: { villageNumber: string }) {
+	const { t } = useTranslate("map");
 	const [groups, setGroups] = useState<string[] | null>(null);
 
 	useEffect(() => {
@@ -80,23 +117,36 @@ function VillageBody({ villageNumber }: { villageNumber: string }) {
 
 	return (
 		<div class="border-t border-gray-100 pb-2">
-			<h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-2">Kårer</h3>
+			<h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-2">
+				{t("search.scoutGroups")}
+			</h3>
 			<ul>
 				{groups.map((name) => (
-					<li key={name} class="px-4 py-2 text-sm">{name}</li>
+					<li key={name} class="px-4 py-2 text-sm">
+						{name}
+					</li>
 				))}
 			</ul>
 		</div>
 	);
 }
 
-export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }: Props) {
+export function BottomSheet({
+	result,
+	onClose,
+	onLocationClick,
+	onHeightChange,
+}: Props) {
+	const { t } = useTranslate("map");
 	const rootRef = useRef<HTMLDivElement>(null);
 	const y = useMotionValue(window.innerHeight);
 	const controls = useAnimation();
 
 	useEffect(() => {
-		controls.start({ y: 0, transition: { type: "spring", stiffness: 400, damping: 40 } });
+		controls.start({
+			y: 0,
+			transition: { type: "spring", stiffness: 400, damping: 40 },
+		});
 	}, []);
 
 	useLayoutEffect(() => {
@@ -107,7 +157,7 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 		result.type === "location"
 			? result.location.category.color
 			: result.type === "group"
-				? result.locations[0]?.category.color ?? "#6b7280"
+				? (result.locations[0]?.category.color ?? "#6b7280")
 				: result.type === "district"
 					? (result.feature.properties?.color ?? "#6b7280")
 					: "#6b7280";
@@ -126,7 +176,10 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 				if (info.offset.y > 80 || info.velocity.y > 400) {
 					onClose();
 				} else {
-					controls.start({ y: 0, transition: { type: "spring", stiffness: 400, damping: 40 } });
+					controls.start({
+						y: 0,
+						transition: { type: "spring", stiffness: 400, damping: 40 },
+					});
 				}
 			}}
 			animate={controls}
@@ -146,50 +199,84 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 							class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
 							style={{ backgroundColor: `${result.location.category.color}20` }}
 						>
-							<SheetIcon iconName={result.location.category.iconName} variant={result.location.category.iconVariant} size={22} />
+							<SheetIcon
+								iconName={result.location.category.iconName}
+								variant={result.location.category.iconVariant}
+								size={22}
+							/>
 						</div>
-						<h2 class="text-base font-semibold flex-1 min-w-0">{result.location.name}</h2>
+						<h2 class="text-base font-semibold flex-1 min-w-0">
+							{result.location.name}
+						</h2>
 					</>
 				)}
-				{result.type === "group" && (() => {
-					const rep = result.locations[0];
-					return (
-						<>
-							{rep && (
-								<div
-									class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-									style={{ backgroundColor: `${rep.category.color}20` }}
-								>
-									<SheetIcon iconName={rep.category.iconName} variant={rep.category.iconVariant} size={22} />
+				{result.type === "group" &&
+					(() => {
+						const rep = result.locations[0];
+						return (
+							<>
+								{rep && (
+									<div
+										class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+										style={{ backgroundColor: `${rep.category.color}20` }}
+									>
+										<SheetIcon
+											iconName={rep.category.iconName}
+											variant={rep.category.iconVariant}
+											size={22}
+										/>
+									</div>
+								)}
+								<div class="flex-1 min-w-0">
+									<h2 class="text-base font-semibold truncate">
+										{result.displayName}
+									</h2>
+									<p class="text-sm text-gray-500">
+										{t("search.locationCount", {
+											count: result.locations.length,
+										})}
+									</p>
 								</div>
-							)}
-							<div class="flex-1 min-w-0">
-								<h2 class="text-base font-semibold truncate">{result.displayName}</h2>
-								<p class="text-sm text-gray-500">{result.locations.length} platser</p>
-							</div>
-						</>
-					);
-				})()}
+							</>
+						);
+					})()}
 				{result.type === "district" && (
 					<>
-						{result.feature.properties?.color
-							? <span class="w-4 h-4 rounded-sm shrink-0 mt-0.5" style={{ backgroundColor: result.feature.properties.color }} />
-							: null}
-						<h2 class="text-base font-semibold flex-1 min-w-0 truncate">{result.name}</h2>
+						{result.feature.properties?.color ? (
+							<span
+								class="w-4 h-4 rounded-sm shrink-0 mt-0.5"
+								style={{ backgroundColor: result.feature.properties.color }}
+							/>
+						) : null}
+						<h2 class="text-base font-semibold flex-1 min-w-0 truncate">
+							{result.name}
+						</h2>
 					</>
 				)}
 				{result.type === "village" && (
-					<h2 class="text-base font-semibold flex-1 min-w-0">By {result.villageNumber}</h2>
+					<h2 class="text-base font-semibold flex-1 min-w-0">
+						{t("search.village", { number: result.villageNumber })}
+					</h2>
 				)}
-				<ScoutButton variant="text" icon={XIcon} iconOnly className="-mr-1 shrink-0" onClick={onClose}>
-					Stäng
+				<ScoutButton
+					variant="text"
+					icon={XIcon}
+					iconOnly
+					className="-mr-1 shrink-0"
+					onClick={onClose}
+				>
+					{t("bottomSheet.close")}
 				</ScoutButton>
 			</div>
 
 			{/* Body */}
-			{result.type === "location" && <LocationBody location={result.location} />}
+			{result.type === "location" && (
+				<LocationBody location={result.location} />
+			)}
 
-			{result.type === "village" && <VillageBody villageNumber={result.villageNumber} />}
+			{result.type === "village" && (
+				<VillageBody villageNumber={result.villageNumber} />
+			)}
 
 			{result.type === "group" && (
 				<ul class="overflow-y-auto max-h-64 border-t border-gray-100">
@@ -200,7 +287,10 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 								class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
 								onClick={() => onLocationClick(loc)}
 							>
-								<SheetIcon iconName={loc.category.iconName} variant={loc.category.iconVariant} />
+								<SheetIcon
+									iconName={loc.category.iconName}
+									variant={loc.category.iconVariant}
+								/>
 								<span class="text-sm">{loc.name}</span>
 							</button>
 						</li>
@@ -210,7 +300,10 @@ export function BottomSheet({ result, onClose, onLocationClick, onHeightChange }
 
 			<div class="pb-safe" />
 			{/* Extends the white background below the sheet so dragging up shows no gap */}
-			<div class="absolute left-0 right-0 h-screen bg-white" style={{ top: "calc(100% - 1px)" }} />
+			<div
+				class="absolute left-0 right-0 h-screen bg-white"
+				style={{ top: "calc(100% - 1px)" }}
+			/>
 		</motion.div>
 	);
 }

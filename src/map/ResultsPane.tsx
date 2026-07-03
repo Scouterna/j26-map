@@ -1,3 +1,4 @@
+import { useTranslate } from "@tolgee/react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../common/icons";
@@ -11,7 +12,7 @@ initSearch();
 const RECENT_KEY = "j26-recent-searches";
 const MAX_RECENT = 8;
 
-type RecentEntry = { key: string; label: string; result: SearchResult };
+type RecentEntry = { key: string; result: SearchResult };
 
 function recentKey(result: SearchResult): string {
 	if (result.type === "location") return `location-${result.location.id}`;
@@ -22,22 +23,16 @@ function recentKey(result: SearchResult): string {
 	return "";
 }
 
-function recentLabel(result: SearchResult): string {
-	if (result.type === "location") return result.location.name;
-	if (result.type === "group") return result.displayName;
-	if (result.type === "village") return `By ${result.villageNumber}`;
-	if (result.type === "district") return result.name;
-	if (result.type === "scout-group") return result.groupName;
-	return "";
-}
-
 function loadRecent(): RecentEntry[] {
-	try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"); }
-	catch { return []; }
+	try {
+		return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+	} catch {
+		return [];
+	}
 }
 
 function saveRecent(result: SearchResult): void {
-	const entry: RecentEntry = { key: recentKey(result), label: recentLabel(result), result };
+	const entry: RecentEntry = { key: recentKey(result), result };
 	const items = loadRecent().filter((r) => r.key !== entry.key);
 	items.unshift(entry);
 	localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, MAX_RECENT)));
@@ -45,40 +40,90 @@ function saveRecent(result: SearchResult): void {
 
 // --- Icons ---
 
-function ResultIcon({ iconName, variant = "outline" }: { iconName: string; variant?: "outline" | "filled" }) {
-	return <img src={getIconURL(iconName, variant)} width={20} height={20} class="shrink-0 opacity-70" alt="" />;
+function ResultIcon({
+	iconName,
+	variant = "outline",
+}: {
+	iconName: string;
+	variant?: "outline" | "filled";
+}) {
+	return (
+		<img
+			src={getIconURL(iconName, variant)}
+			width={20}
+			height={20}
+			class="shrink-0 opacity-70"
+			alt=""
+		/>
+	);
 }
 
 function ClockIcon() {
 	return (
-		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-gray-400">
-			<circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="20"
+			height="20"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class="shrink-0 text-gray-400"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<polyline points="12 6 12 12 16 14" />
 		</svg>
 	);
 }
 
 // --- Row components ---
 
-function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => void }) {
+function ResultRow({
+	result,
+	onClick,
+}: {
+	result: SearchResult;
+	onClick: () => void;
+}) {
+	const { t } = useTranslate("map");
 	if (result.type === "location") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
-				<ResultIcon iconName={result.location.category.iconName} variant={result.location.category.iconVariant} />
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
+				<ResultIcon
+					iconName={result.location.category.iconName}
+					variant={result.location.category.iconVariant}
+				/>
 				<span class="text-sm">{result.location.name}</span>
 			</button>
 		);
 	}
 	if (result.type === "village") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
 				<ResultIcon iconName="home" />
-				<span class="text-sm">By {result.villageNumber}</span>
+				<span class="text-sm">
+					{t("search.village", { number: result.villageNumber })}
+				</span>
 			</button>
 		);
 	}
 	if (result.type === "district") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
 				<ResultIcon iconName="map" />
 				<span class="text-sm">{result.name}</span>
 			</button>
@@ -86,11 +131,17 @@ function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => v
 	}
 	if (result.type === "scout-group") {
 		return (
-			<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={onClick}>
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
 				<ResultIcon iconName="users-group" />
 				<div class="flex flex-col min-w-0">
 					<span class="text-sm">{result.groupName}</span>
-					<span class="text-xs text-gray-400">By {result.village.villageNumber}</span>
+					<span class="text-xs text-gray-400">
+						{t("search.village", { number: result.village.villageNumber })}
+					</span>
 				</div>
 			</button>
 		);
@@ -98,20 +149,51 @@ function ResultRow({ result, onClick }: { result: SearchResult; onClick: () => v
 	return null;
 }
 
-function CategoryCard({ result, onClick }: { result: Extract<SearchResult, { type: "group" }>; onClick: () => void }) {
+function CategoryCard({
+	result,
+	onClick,
+}: {
+	result: Extract<SearchResult, { type: "group" }>;
+	onClick: () => void;
+}) {
+	const { t } = useTranslate("map");
 	const rep = result.locations[0];
 	return (
-		<button type="button" class="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100" onClick={onClick}>
+		<button
+			type="button"
+			class="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100"
+			onClick={onClick}
+		>
 			{rep && (
 				<div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-gray-100">
-					<ResultIcon iconName={rep.category.iconName} variant={rep.category.iconVariant} />
+					<ResultIcon
+						iconName={rep.category.iconName}
+						variant={rep.category.iconVariant}
+					/>
 				</div>
 			)}
 			<div class="flex-1 min-w-0">
-				<div class="text-sm font-medium">Visa alla {result.displayName.toLowerCase()}</div>
-				<div class="text-xs text-gray-400">{result.locations.length} platser</div>
+				<div class="text-sm font-medium">
+					{t("search.showAllCategory", {
+						category: result.displayName.toLowerCase(),
+					})}
+				</div>
+				<div class="text-xs text-gray-400">
+					{t("search.locationCount", { count: result.locations.length })}
+				</div>
 			</div>
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-gray-400">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="shrink-0 text-gray-400"
+			>
 				<polyline points="9 18 15 12 9 6" />
 			</svg>
 		</button>
@@ -119,30 +201,57 @@ function CategoryCard({ result, onClick }: { result: Extract<SearchResult, { typ
 }
 
 function SectionHeader({ title }: { title: string }) {
-	return <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{title}</div>;
+	return (
+		<div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+			{title}
+		</div>
+	);
 }
 
 // --- Empty state ---
 
 type CategoryChip = { tag: string; label: string };
 
-function EmptyState({ categories, onCategoryClick, recents, onRecentClick }: {
+function recentLabel(
+	result: SearchResult,
+	t: ReturnType<typeof useTranslate>["t"],
+): string {
+	if (result.type === "location") return result.location.name;
+	if (result.type === "group") return result.displayName;
+	if (result.type === "village")
+		return t("search.village", { number: result.villageNumber });
+	if (result.type === "district") return result.name;
+	if (result.type === "scout-group") return result.groupName;
+	return "";
+}
+
+function EmptyState({
+	categories,
+	onCategoryClick,
+	recents,
+	onRecentClick,
+}: {
 	categories: CategoryChip[];
 	onCategoryClick: (label: string) => void;
 	recents: RecentEntry[];
 	onRecentClick: (result: SearchResult) => void;
 }) {
+	const { t } = useTranslate("map");
 	return (
 		<div>
 			{recents.length > 0 && (
 				<>
-					<SectionHeader title="Senaste" />
+					<SectionHeader title={t("search.recent")} />
 					<ul>
 						{recents.map((entry) => (
 							<li key={entry.key}>
-								<button type="button" class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100" onClick={() => onRecentClick(entry.result)}>
+								<button
+									type="button"
+									class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+									onClick={() => onRecentClick(entry.result)}
+								>
 									<ClockIcon />
-									<span class="text-sm">{entry.label}</span>
+									<span class="text-sm">{recentLabel(entry.result, t)}</span>
 								</button>
 							</li>
 						))}
@@ -151,10 +260,15 @@ function EmptyState({ categories, onCategoryClick, recents, onRecentClick }: {
 			)}
 			{categories.length > 0 && (
 				<>
-					<SectionHeader title="Kategorier" />
+					<SectionHeader title={t("search.categories")} />
 					<div class="flex flex-wrap gap-2 px-4 py-2">
 						{categories.map(({ tag, label }) => (
-							<button key={tag} type="button" class="text-sm px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300" onClick={() => onCategoryClick(label)}>
+							<button
+								key={tag}
+								type="button"
+								class="text-sm px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300"
+								onClick={() => onCategoryClick(label)}
+							>
 								{label}
 							</button>
 						))}
@@ -182,6 +296,7 @@ function resultKey(result: SearchResult): string {
 }
 
 export function ResultsPane({ searchValue, onResultClick }: Props) {
+	const { t } = useTranslate("map");
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [categories, setCategories] = useState<CategoryChip[]>([]);
 	const [recents, setRecents] = useState<RecentEntry[]>([]);
@@ -189,7 +304,11 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 	const recentsLoadedRef = useRef(false);
 
 	useEffect(() => {
-		getGroups().then((groups) => setCategories(groups.map(({ tag, displayName }) => ({ tag, label: displayName }))));
+		getGroups().then((groups) =>
+			setCategories(
+				groups.map(({ tag, displayName }) => ({ tag, label: displayName })),
+			),
+		);
 	}, []);
 
 	useEffect(() => {
@@ -202,7 +321,10 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 			return;
 		}
 		setLoading(true);
-		search(searchValue).then((r) => { setResults(r); setLoading(false); });
+		search(searchValue).then((r) => {
+			setResults(r);
+			setLoading(false);
+		});
 	}, [searchValue]);
 
 	const handleClick = (result: SearchResult) => {
@@ -220,7 +342,9 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 	const isEmpty = !loading && searchValue.trim() !== "" && results.length === 0;
 	const showEmpty = !searchValue.trim();
 
-	const groupResults = results.filter((r): r is Extract<SearchResult, { type: "group" }> => r.type === "group");
+	const groupResults = results.filter(
+		(r): r is Extract<SearchResult, { type: "group" }> => r.type === "group",
+	);
 	const locationResults = results.filter((r) => r.type === "location");
 	const villageResults = results.filter((r) => r.type === "village");
 	const districtResults = results.filter((r) => r.type === "district");
@@ -235,20 +359,31 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 			exit={{ opacity: 0, top: 0, transition: { duration: 0.08 } }}
 		>
 			{showEmpty ? (
-				<EmptyState categories={categories} onCategoryClick={handleCategoryChip} recents={recents} onRecentClick={handleClick} />
+				<EmptyState
+					categories={categories}
+					onCategoryClick={handleCategoryChip}
+					recents={recents}
+					onRecentClick={handleClick}
+				/>
 			) : loading ? (
-				<p class="px-4 py-3 text-sm text-gray-400">Söker...</p>
+				<p class="px-4 py-3 text-sm text-gray-400">{t("search.searching")}</p>
 			) : isEmpty ? (
-				<p class="px-4 py-3 text-sm text-gray-400">Inga resultat</p>
+				<p class="px-4 py-3 text-sm text-gray-400">{t("search.noResults")}</p>
 			) : (
 				<>
 					{groupResults.map((r) => (
-						<CategoryCard key={resultKey(r)} result={r} onClick={() => handleClick(r)} />
+						<CategoryCard
+							key={resultKey(r)}
+							result={r}
+							onClick={() => handleClick(r)}
+						/>
 					))}
 
 					{locationResults.length > 0 && (
 						<>
-							{groupResults.length > 0 && <SectionHeader title="Platser" />}
+							{groupResults.length > 0 && (
+								<SectionHeader title={t("search.locations")} />
+							)}
 							<ul>
 								{locationResults.map((r) => (
 									<li key={resultKey(r)}>
@@ -261,7 +396,7 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 
 					{villageResults.length > 0 && (
 						<>
-							<SectionHeader title="Byar" />
+							<SectionHeader title={t("search.villages")} />
 							<ul>
 								{villageResults.map((r) => (
 									<li key={resultKey(r)}>
@@ -274,7 +409,7 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 
 					{districtResults.length > 0 && (
 						<>
-							<SectionHeader title="Distrikt" />
+							<SectionHeader title={t("search.districts")} />
 							<ul>
 								{districtResults.map((r) => (
 									<li key={resultKey(r)}>
@@ -287,7 +422,7 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 
 					{scoutGroupResults.length > 0 && (
 						<>
-							<SectionHeader title="Kårer" />
+							<SectionHeader title={t("search.scoutGroups")} />
 							<ul>
 								{scoutGroupResults.map((r) => (
 									<li key={resultKey(r)}>

@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
 	base: "/_services/map",
+	envPrefix: ["VITE_", "J26_PUBLIC_"],
 	plugins: [preact(), tailwindcss()],
 	build: {
 		rollupOptions: {
