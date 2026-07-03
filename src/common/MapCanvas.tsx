@@ -10,13 +10,19 @@ import type { PointTuple } from "./locationTypes";
 const pmtilesProtocol = new PmtilesProtocol();
 maplibregl.addProtocol("pmtiles", pmtilesProtocol.tile);
 
-const DEFAULT_CENTER: PointTuple = [55.98071, 14.13704];
-const DEFAULT_ZOOM = 16;
+const DEFAULT_CENTER: PointTuple = [55.98005, 14.13558];
+const DEFAULT_ZOOM = 18;
 
 // [sw, ne] as [lng, lat] pairs
 const MAX_BOUNDS: maplibregl.LngLatBoundsLike = [
 	[14.115, 55.961],
 	[14.157, 55.992],
+];
+
+// Bounding box of the district polygons in public/layers/districts.geojson, as [sw, ne] [lng, lat] pairs
+const DISTRICTS_BOUNDS: maplibregl.LngLatBoundsLike = [
+	[14.126175, 55.976548],
+	[14.144993, 55.983551],
 ];
 
 // Style for the "osm" Shortbread vector source (see https://shortbread-tiles.org),
@@ -151,17 +157,26 @@ export function MapCanvas({
 	interactive = true,
 	osmTiles = true,
 	attribution = true,
-	center = DEFAULT_CENTER,
-	zoom = DEFAULT_ZOOM,
+	center,
+	zoom,
 }: Props) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [map, setMap] = useState<maplibregl.Map | null>(null);
+	// When no explicit center/zoom is given, fit to the districts once the map loads
+	// instead of using a fixed zoom, so the initial view adapts to the viewport size.
+	const fitToDistricts = center === undefined && zoom === undefined;
 
 	useEffect(() => {
 		if (!containerRef.current) return;
 
-		containerRef.current.style.setProperty("--map-zoom", String(zoom));
-		containerRef.current.style.setProperty("--map-zoom-anim", String(zoom));
+		const initialCenter = center ?? DEFAULT_CENTER;
+		const initialZoom = zoom ?? DEFAULT_ZOOM;
+
+		containerRef.current.style.setProperty("--map-zoom", String(initialZoom));
+		containerRef.current.style.setProperty(
+			"--map-zoom-anim",
+			String(initialZoom),
+		);
 
 		const osmSource: maplibregl.SourceSpecification = {
 			type: "vector",
@@ -178,8 +193,8 @@ export function MapCanvas({
 				sources: osmTiles ? { osm: osmSource } : {},
 				layers: osmTiles ? OSM_LAYERS : [],
 			},
-			center: [center[1], center[0]], // [lng, lat]
-			zoom,
+			center: [initialCenter[1], initialCenter[0]], // [lng, lat]
+			zoom: initialZoom,
 			maxBounds: MAX_BOUNDS,
 			...(interactive && { minZoom: 14, maxZoom: 19 }),
 			dragRotate: false,
@@ -227,6 +242,13 @@ export function MapCanvas({
 		m.on("move", updateAnimZoom);
 
 		m.once("load", () => {
+			if (fitToDistricts) {
+				m.fitBounds(DISTRICTS_BOUNDS, {
+					padding: 40,
+					maxZoom: 19,
+					duration: 0,
+				});
+			}
 			updateZoom();
 			updateAnimZoom();
 			setMap(m);
