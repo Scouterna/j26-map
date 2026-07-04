@@ -58,6 +58,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX=https://j26-translations.jamboree.se/dbc78bc1f5f74fadae0a49abfe745c57
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v3

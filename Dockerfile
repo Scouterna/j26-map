@@ -13,6 +13,10 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+ARG J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX
+ENV J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX=$J26_PUBLIC_TOLGEE_BACKEND_FETCH_PREFIX
+
 RUN pnpm run build
 
 FROM nginx:alpine AS runner
