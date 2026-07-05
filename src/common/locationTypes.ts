@@ -17,6 +17,7 @@ export type OpeningHourSlot = { from: string; to: string };
 export type Location = {
 	id: string;
 	name: string;
+	description: string;
 	position: PointTuple;
 	category: Category;
 	tags: string[];

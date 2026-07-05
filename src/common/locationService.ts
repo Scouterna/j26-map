@@ -1,12 +1,22 @@
 import type { IconVariant } from "./icons";
 import type { Location, OpeningHourSlot } from "./locationTypes";
+import { tolgee } from "./tolgee";
 
 const BOOKING_API_BASE = "/_services/booking/api";
 const J26_LOGO_PREFIX = "j26-logo-";
 
+// Localized fields come back keyed by language code. We show Swedish when the
+// UI is in Swedish, and fall back to English for every other locale.
+type LocalizedText = { sv: string; en: string };
+
+function pickLocalized(text: LocalizedText): string {
+	return tolgee.getLanguage() === "sv" ? text.sv : text.en;
+}
+
 type RawLocation = {
 	id: string;
-	name: string;
+	name: LocalizedText;
+	description: LocalizedText;
 	icon_name: string;
 	icon_variant: IconVariant;
 	color: string;
@@ -43,7 +53,8 @@ export async function getLocations(): Promise<Location[]> {
 
 			return {
 				id: loc.id,
-				name: loc.name,
+				name: pickLocalized(loc.name),
+				description: pickLocalized(loc.description),
 				position: [loc.latitude, loc.longitude],
 				category: {
 					iconName: loc.icon_name,
