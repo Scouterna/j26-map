@@ -32,9 +32,9 @@ export function createMarkerElement(color: string, size = MARKER_SIZE): HTMLElem
 }
 
 // Overlay the category icon as a white shape masked by the icon SVG. Applied
-// separately (and usually async) from createMarkerElement because Tabler icons
-// come from a cross-origin CDN and iOS/WebKit won't apply a cross-origin
-// mask-image — callers pass a mask-safe URL from getIconMaskUrl/toMaskSafeUrl.
+// separately (and async) from createMarkerElement — callers pass a mask-safe URL
+// from getIconMaskUrl/toMaskSafeUrl (icons are same-origin, so this resolves
+// without a network round-trip).
 export function applyMarkerIcon(markerEl: HTMLElement, maskUrl: string): void {
 	const pin = markerEl.querySelector<HTMLElement>(".j26-marker-pin");
 	if (!pin) return;

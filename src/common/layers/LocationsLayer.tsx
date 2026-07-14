@@ -61,7 +61,8 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 				? createSvgBadgeMarker(loc.markerSvg!)
 				: createMarkerElement(loc.category.color);
 			if (!isBadge) {
-				// Async: Tabler icons are fetched → data: URI so the mask works on iOS.
+				// Async API, but icons are same-origin now so the mask URL resolves
+				// immediately (no network fetch).
 				getIconMaskUrl(loc.category.iconName, loc.category.iconVariant).then(
 					(maskUrl) => {
 						if (maskUrl) applyMarkerIcon(pinInner, maskUrl);
