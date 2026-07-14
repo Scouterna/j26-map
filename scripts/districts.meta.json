@@ -1,0 +1,11 @@
+{
+	"_comment": "District branding (name + hex color) joined onto the QGIS geometry during `pnpm export-layers`, keyed by the DXF entity `handle`. The CAD/DXF source carries no district names or palette colors, so they live here; the polygon geometry stays source-of-truth in QGIS. Colors are sampled from the print map legend (j26_karta_tryck-6.pdf). The handle→name mapping was guessed by location and is UNVERIFIED — the CAD layer is 'Stadsdelar försl 2' (proposal 2) and may not match the final print districts; handle 102626 centres west of the map bounds (likely a stray rectangle). Verify each polygon on the map and correct below. Re-digitizing a district in CAD changes its handle; update the key (the export warns on unmatched handles).",
+	"byHandle": {
+		"102626": { "name": "Funktionärsby", "color": "#6FA379" },
+		"102627": { "name": "Himalaya", "color": "#E9ABB7" },
+		"102630": { "name": "Stora Barriärrevet", "color": "#BA2F4B" },
+		"102631": { "name": "Amazonas", "color": "#165B57" },
+		"102632": { "name": "Östersjön", "color": "#6099C5" },
+		"102635": { "name": "Sahara", "color": "#E58E27" }
+	}
+}

@@ -10,13 +10,14 @@ type LabelFeature = {
 
 function createNumberElement(number: string): HTMLElement {
 	const el = document.createElement("div");
-	// j26-zoom-show-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
+	// j26-zoom-show-16 class (style.css) provides zoom-based opacity via --map-zoom-anim.
 	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
-	el.className = "j26-zoom-show-16-5";
+	el.className = "j26-zoom-show-16";
 	el.style.cssText = `
-		font-size: 11px;
-		font-weight: 600;
-		color: #8a6a3a;
+		font-size: 14px;
+		font-weight: 700;
+		color: #ffffff;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 		white-space: nowrap;
 		pointer-events: none;
 		user-select: none;

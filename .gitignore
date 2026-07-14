@@ -28,3 +28,6 @@ dist-ssr
 .j26.local.yaml
 
 .env
+
+# Source reference art (kept locally, not committed)
+j26_karta_tryck-6.pdf

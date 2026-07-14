@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "scen",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"xy_coordinate_resolution": 1e-07,
+"features": [
+{ "type": "Feature", "properties": { "handle": 70082, "block": -1, "etype": 18, "space": 0, "layer": "J26_Scen_Scen", "olinetype": "BYLAYER", "linetype": "", "color": "255,191,0,254", "ocolor": 256, "color24": -1, "transparency": 0, "lweight": -1, "linewidth": 0.0, "ltscale": 1.0, "visible": 1, "width": 0.0, "thickness": 0.0, "ext": "(3:0,0,0.1)" }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1236802, 55.9791094, 0.0 ], [ 14.123779, 55.9790937, 0.0 ], [ 14.1237608, 55.9790579, 0.0 ], [ 14.1236621, 55.9790737, 0.0 ], [ 14.1236802, 55.9791094, 0.0 ] ] } },
+{ "type": "Feature", "properties": { "handle": 70083, "block": -1, "etype": 18, "space": 0, "layer": "J26_Scen_Scen", "olinetype": "BYLAYER", "linetype": "", "color": "255,191,0,254", "ocolor": 256, "color24": -1, "transparency": 0, "lweight": -1, "linewidth": 0.0, "ltscale": 1.0, "visible": 1, "width": 0.0, "thickness": 0.0, "ext": "(3:0,0,0.1)" }, "geometry": { "type": "LineString", "coordinates": [ [ 14.123779, 55.9790937, 0.0 ], [ 14.1241101, 55.9790408, 0.0 ], [ 14.1240562, 55.9789347, 0.0 ], [ 14.1237251, 55.9789876, 0.0 ], [ 14.123779, 55.9790937, 0.0 ] ] } },
+{ "type": "Feature", "properties": { "handle": 70084, "block": -1, "etype": 18, "space": 0, "layer": "J26_Scen_Scen", "olinetype": "BYLAYER", "linetype": "", "color": "255,191,0,254", "ocolor": 256, "color24": -1, "transparency": 0, "lweight": -1, "linewidth": 0.0, "ltscale": 1.0, "visible": 1, "width": 0.0, "thickness": 0.0, "ext": "(3:0,0,0.1)" }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1241101, 55.9790408, 0.0 ], [ 14.1242088, 55.979025, 0.0 ], [ 14.1241907, 55.9789893, 0.0 ], [ 14.1240919, 55.979005, 0.0 ], [ 14.1241101, 55.9790408, 0.0 ] ] } }
+]
+}

@@ -12,7 +12,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			<GeoJsonLayer
 				id="outline"
 				src="./layers/outline.geojson"
-				style={{ color: "transparent", fillColor: "#cdebb0", fillOpacity: 1 }}
+				style={{ color: "transparent", fillColor: "#c8dfae", fillOpacity: 1 }}
 			/>
 			<GeoJsonLayer
 				id="forest"
@@ -29,24 +29,26 @@ export const BaseLayers = memo(function BaseLayers() {
 					</pattern>
 				`}
 			/>
+			{/* Zoomed out: merged district blocks (padding hidden, less cluttered).
+			    Zoomed in: individual rounded village tiles. The blobs (bottom layer)
+			    stay fully opaque while the tiles fade in on top, then fade out only
+			    once the tiles are opaque — so an opaque layer always covers the area
+			    and the background never bleeds through during the crossfade. */}
+			<GeoJsonLayer
+				id="village-blocks"
+				src="./layers/village_blocks.geojson"
+				style={{
+					color: "transparent",
+					fillOpacity: ["interpolate", ["linear"], ["zoom"], 16, 1, 16.3, 0],
+				}}
+				fillColorAttribute="color"
+			/>
 			<GeoJsonLayer
 				id="villages"
 				src="./layers/villages.geojson"
 				style={{
-					color: "#c8a870",
-					weight: 1,
-					fillColor: "#f0e6d0",
-					fillOpacity: 0.5,
-					fill: true,
-				}}
-			/>
-			<GeoJsonLayer
-				id="districts-fill"
-				src="./layers/districts.geojson"
-				style={{
 					color: "transparent",
-					weight: 0,
-					fillOpacity: ["interpolate", ["linear"], ["zoom"], 16, 0.2, 16.5, 0],
+					fillOpacity: ["interpolate", ["linear"], ["zoom"], 15.7, 0, 16, 1],
 				}}
 				fillColorAttribute="color"
 			/>

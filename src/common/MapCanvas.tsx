@@ -45,7 +45,7 @@ const OSM_LAYERS: maplibregl.LayerSpecification[] = [
 				["forest", "wood"],
 				"#c8dfae",
 				["grass", "meadow", "park", "village_green", "national_park"],
-				"#cdebb0",
+				"#c8dfae",
 				["farmland", "farm", "orchard", "vineyard"],
 				"#eef0d5",
 				["residential", "urban"],

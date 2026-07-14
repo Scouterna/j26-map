@@ -5,7 +5,8 @@
 		"dev": "vite",
 		"build": "vite build",
 		"preview": "vite preview",
-		"update-ui": "ncu --filter '@scouterna/*' -u"
+		"update-ui": "ncu --filter '@scouterna/*' -u",
+		"export-layers": "node scripts/export-qgis-layers.mjs"
 	},
 	"dependencies": {
 		"@fontsource-variable/source-sans-3": "^5.2.9",
@@ -29,8 +30,10 @@
 		"@biomejs/biome": "2.4.7",
 		"@preact/preset-vite": "^2.10.2",
 		"@scouterna/tailwind-theme": "^0.0.5",
+		"@turf/turf": "^7.3.5",
 		"@types/geojson": "^7946.0.16",
 		"@types/node": "^25.5.0",
+		"polylabel": "^2.1.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"
 	},

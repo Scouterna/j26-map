@@ -32,16 +32,20 @@ function centroid(coords: number[][]): PointTuple {
 	return [cy, cx]; // [lat, lng]
 }
 
-function createLabelElement(name: string, color = "#3d5a3e"): HTMLElement {
+function createLabelElement(name: string): HTMLElement {
 	const el = document.createElement("div");
-	// j26-zoom-hide-18 class (style.css) provides zoom-based opacity via --map-zoom-anim.
+	// j26-zoom-hide-16 (style.css) fades these out over zoom 15.5→16 via
+	// --map-zoom-anim, in step with the merged village blobs (which fade out by
+	// zoom 16) — so district labels and blobs show together when zoomed out.
 	// This element is the INNER content; the outer wrapper is what MapLibre controls (opacity always 1).
-	el.className = "j26-zoom-hide-16-5";
+	el.className = "j26-zoom-hide-16";
 	el.style.cssText = `
 		font-size: calc(18px * pow(2, (min(var(--map-zoom-anim), 17) - 16) * 0.4));
 		font-weight: 600;
-		color: ${color};
-		text-shadow: 0 0 3px #cdebb0, 0 0 6px #cdebb0;
+		color: #fafcd9;
+		background: #15375c;
+		padding: 0.2em 0.7em;
+		border-radius: 0.5em;
 		white-space: nowrap;
 		pointer-events: none;
 		user-select: none;
@@ -54,7 +58,7 @@ function createLabelElement(name: string, color = "#3d5a3e"): HTMLElement {
 export function AreaLabelsLayer() {
 	const map = useMap();
 	const [labels, setLabels] = useState<
-		{ name: string; color?: string; position: PointTuple }[]
+		{ name: string; position: PointTuple }[]
 	>([]);
 
 	useEffect(() => {
@@ -64,7 +68,6 @@ export function AreaLabelsLayer() {
 				setLabels(
 					geojson.features.map((f) => ({
 						name: f.properties.name,
-						color: f.properties.color,
 						position: centroid(f.geometry.coordinates[0]),
 					})),
 				);
@@ -74,10 +77,10 @@ export function AreaLabelsLayer() {
 	useEffect(() => {
 		if (!map || labels.length === 0) return;
 
-		const markers = labels.map(({ name, color, position }) => {
+		const markers = labels.map(({ name, position }) => {
 			// Inner element carries the zoom class; MapLibre's _updateOpacity sets opacity on the
 			// outer wrapper only, so the inner zoom-class opacity is not overridden.
-			const inner = createLabelElement(name, color);
+			const inner = createLabelElement(name);
 			const outer = document.createElement("div");
 			outer.style.cssText = "display:inline-block;pointer-events:none";
 			outer.appendChild(inner);
