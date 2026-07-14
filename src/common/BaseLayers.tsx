@@ -1,6 +1,7 @@
 import { memo } from "preact/compat";
 import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
+import { ProgramLabelsLayer } from "./layers/ProgramLabelsLayer";
 import { RoadLabelsLayer } from "./layers/RoadLabelsLayer";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 import { layerUrl } from "./mapLayers";
@@ -79,6 +80,18 @@ export const BaseLayers = memo(function BaseLayers() {
 					fillOpacity: 1,
 				}}
 			/>
+			<GeoJsonLayer
+				id="program"
+				src={layerUrl("program")}
+				style={{
+					color: "#15375c",
+					weight: 3,
+					opacity: 1,
+					dashArray: [1, 3],
+					lineCap: "round",
+				}}
+			/>
+			<ProgramLabelsLayer />
 		</>
 	);
 });

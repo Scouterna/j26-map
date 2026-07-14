@@ -59,6 +59,9 @@ const CONFIG = {
 	villageCornerRadiusMeters: 2.0,
 	// Corner radius for the merged district blocks (village_blocks.geojson).
 	villageBlockRoundMeters: 5.0,
+	// Corner radius for the program-area outlines (program.geojson) — large so the
+	// blocky CAD shapes read as very smooth, rounded blobs.
+	programRoundMeters: 12.0,
 };
 
 // Per-layer tweaks the CAD/DXF source can't express on its own:
@@ -83,6 +86,9 @@ const LAYER_OVERRIDES = {
 	},
 	tents: {
 		mergeTouching: true,
+	},
+	program: {
+		smooth: true,
 	},
 };
 
@@ -478,6 +484,55 @@ function mergeTouchingPolys(outMnt, name) {
 	return notes.join("; ");
 }
 
+// Round the blocky CAD outlines into very smooth blobs. Polygonise each closed
+// line, then run a close pass (dilate r, erode r → rounds concave corners) and
+// an open pass (erode r, dilate r → rounds convex corners), both with radius
+// programRoundMeters, so every corner ends up arced to that radius. The smoothed
+// polygon boundary is written back out as a LineString so it still draws as an
+// outline. Each feature is buffered on its own, so separate areas never merge.
+function smoothPolys(outMnt, name) {
+	const fc = JSON.parse(readFileSync(outMnt, "utf8"));
+	const r = CONFIG.programRoundMeters / 1000; // km
+	const hasGeom = (g) => g?.geometry?.coordinates?.length;
+	const buf = (p, d) => turf.buffer(p, d, { units: "kilometers", steps: 16 });
+	const features = [];
+	let dropped = 0;
+	for (const f of fc.features) {
+		let poly;
+		try {
+			poly = f.geometry?.type === "LineString" ? turf.lineToPolygon(f) : f;
+		} catch {
+			dropped++;
+			continue;
+		}
+		const ring = poly.geometry?.coordinates?.[0];
+		if (!Array.isArray(ring) || ring.length < 4) {
+			dropped++;
+			continue;
+		}
+		let smoothed = poly;
+		try {
+			const c = buf(buf(poly, r), -r); // close: round concave corners
+			const o = c && hasGeom(c) ? buf(buf(c, -r), r) : null; // open: round convex
+			if (o && hasGeom(o)) smoothed = o;
+		} catch {}
+		for (const lf of turf.flatten(turf.polygonToLine(smoothed)).features) {
+			features.push({
+				type: "Feature",
+				properties: f.properties,
+				geometry: lf.geometry,
+			});
+		}
+	}
+	writeFileSync(
+		outMnt,
+		JSON.stringify({ type: "FeatureCollection", name, features }),
+	);
+	const notes = [`smoothed ${features.length} shape(s)`];
+	if (dropped > 0) notes.push(`${dropped} degenerate dropped`);
+	return notes.join("; ");
+}
+
 function exportLayer(layer, qgzDirMnt) {
 	const override = LAYER_OVERRIDES[layer.name] ?? {};
 	const src = parseSource(layer.source, qgzDirMnt);
@@ -527,6 +582,9 @@ function exportLayer(layer, qgzDirMnt) {
 	}
 	if (override.mergeTouching) {
 		warning = mergeTouchingPolys(outMnt, layer.name);
+	}
+	if (override.smooth) {
+		warning = smoothPolys(outMnt, layer.name);
 	}
 
 	return {

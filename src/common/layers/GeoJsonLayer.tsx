@@ -16,6 +16,7 @@ type LayerStyle = {
 	fillColor?: string;
 	fillOpacity?: number | ExpressionSpecification;
 	lineCap?: "butt" | "round" | "square";
+	dashArray?: number[];
 	fill?: boolean;
 };
 
@@ -133,6 +134,10 @@ function buildLinePaint(
 
 	if (style?.opacity !== undefined) {
 		paint["line-opacity"] = style.opacity;
+	}
+
+	if (style?.dashArray) {
+		paint["line-dasharray"] = style.dashArray;
 	}
 
 	const baseWeight = style?.weight ?? 3;
