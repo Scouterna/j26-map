@@ -45,8 +45,9 @@ const CONFIG = {
 	// Windows ogr2ogr.exe (ships with QGIS). Update the version when QGIS updates.
 	ogr2ogr:
 		process.env.OGR2OGR ?? "/mnt/c/Program Files/QGIS 3.40.14/bin/ogr2ogr.exe",
-	// Where exported files land (WSL path).
-	outDir: process.env.OUT_DIR ?? resolve(repoRoot, "public/layers"),
+	// Where exported files land (WSL path). src/map-layers so Vite content-hashes
+	// them (cache-busting on deploy); see src/common/mapLayers.ts.
+	outDir: process.env.OUT_DIR ?? resolve(repoRoot, "src/map-layers"),
 	// Target CRS. WGS84 (lng/lat) is what MapLibre GL expects.
 	targetSrs: "EPSG:4326",
 	// Decimal places of degrees in output (7 ≈ 1cm; keeps files small).

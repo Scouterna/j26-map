@@ -3,6 +3,7 @@ import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
 import { RoadLabelsLayer } from "./layers/RoadLabelsLayer";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
+import { layerUrl } from "./mapLayers";
 
 export const BaseLayers = memo(function BaseLayers() {
 	return (
@@ -11,12 +12,12 @@ export const BaseLayers = memo(function BaseLayers() {
 			<VillageLabelsLayer />
 			<GeoJsonLayer
 				id="outline"
-				src="./layers/outline.geojson"
+				src={layerUrl("outline")}
 				style={{ color: "transparent", fillColor: "#c8dfae", fillOpacity: 1 }}
 			/>
 			<GeoJsonLayer
 				id="forest"
-				src="./layers/forest.geojson"
+				src={layerUrl("forest")}
 				style={{
 					color: "transparent",
 					fillColor: "url(#forest-texture)",
@@ -36,7 +37,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			    and the background never bleeds through during the crossfade. */}
 			<GeoJsonLayer
 				id="village-blocks"
-				src="./layers/village_blocks.geojson"
+				src={layerUrl("village_blocks")}
 				style={{
 					color: "transparent",
 					fillOpacity: ["interpolate", ["linear"], ["zoom"], 16, 1, 16.3, 0],
@@ -45,7 +46,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			/>
 			<GeoJsonLayer
 				id="villages"
-				src="./layers/villages.geojson"
+				src={layerUrl("villages")}
 				style={{
 					color: "transparent",
 					fillOpacity: ["interpolate", ["linear"], ["zoom"], 15.7, 0, 16, 1],
@@ -54,7 +55,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			/>
 			<GeoJsonLayer
 				id="roads-outline"
-				src="./layers/roads.geojson"
+				src={layerUrl("roads")}
 				style={{ color: "#b3b3b3", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
@@ -62,7 +63,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			/>
 			<GeoJsonLayer
 				id="roads-fill"
-				src="./layers/roads.geojson"
+				src={layerUrl("roads")}
 				style={{ color: "#ffffff", weight: 5, opacity: 1, lineCap: "butt" }}
 				geoScale
 				weightAttribute="width"
@@ -70,7 +71,7 @@ export const BaseLayers = memo(function BaseLayers() {
 			<RoadLabelsLayer />
 			<GeoJsonLayer
 				id="tents"
-				src="./layers/tents.geojson"
+				src={layerUrl("tents")}
 				style={{
 					color: "#b8a898",
 					weight: 1,

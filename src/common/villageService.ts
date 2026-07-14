@@ -1,4 +1,5 @@
 import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
+import { layerUrl } from "./mapLayers";
 import type { SearchResultVillage } from "./searchTypes";
 
 export type VillageEntry = {
@@ -33,10 +34,10 @@ let entriesPromise: Promise<VillageEntry[]> | null = null;
 
 async function buildEntries(): Promise<VillageEntry[]> {
 	const [labelsRaw, villagesRaw] = await Promise.all([
-		fetch("./layers/village_labels.geojson").then(
+		fetch(layerUrl("village_labels")).then(
 			(r) => r.json() as Promise<FeatureCollection>,
 		),
-		fetch("./layers/villages.geojson").then(
+		fetch(layerUrl("villages")).then(
 			(r) => r.json() as Promise<FeatureCollection>,
 		),
 	]);

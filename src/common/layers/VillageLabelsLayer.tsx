@@ -2,6 +2,7 @@ import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
 import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
+import { layerUrl } from "../mapLayers";
 
 type LabelFeature = {
 	properties: { village_number: string };
@@ -34,7 +35,7 @@ export function VillageLabelsLayer() {
 	>([]);
 
 	useEffect(() => {
-		fetch("./layers/village_labels.geojson")
+		fetch(layerUrl("village_labels"))
 			.then((r) => r.json())
 			.then((geojson: { features: LabelFeature[] }) => {
 				setLabels(

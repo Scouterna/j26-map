@@ -2,6 +2,7 @@ import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
 import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
+import { layerUrl } from "../mapLayers";
 
 type DistrictFeature = {
 	properties: { name: string; color?: string };
@@ -62,7 +63,7 @@ export function AreaLabelsLayer() {
 	>([]);
 
 	useEffect(() => {
-		fetch("./layers/districts.geojson")
+		fetch(layerUrl("districts"))
 			.then((r) => r.json())
 			.then((geojson: { features: DistrictFeature[] }) => {
 				setLabels(

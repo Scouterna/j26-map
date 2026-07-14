@@ -2,6 +2,7 @@ import type maplibregl from "maplibre-gl";
 import type { SymbolLayerSpecification } from "maplibre-gl";
 import { useEffect } from "preact/hooks";
 import { useMap } from "../MapCanvas";
+import { layerUrl } from "../mapLayers";
 
 const EMPTY_FC = { type: "FeatureCollection" as const, features: [] };
 
@@ -40,7 +41,7 @@ export function RoadLabelsLayer() {
 		map.addLayer(spec);
 
 		let cancelled = false;
-		fetch("./layers/roads.geojson")
+		fetch(layerUrl("roads"))
 			.then((r) => r.json())
 			.then((data) => {
 				if (cancelled) return;

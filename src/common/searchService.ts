@@ -3,6 +3,7 @@ import MiniSearch from "minisearch";
 import { getLocations } from "./locationService";
 import { getLocationTagNames } from "./locationTagService";
 import type { Location } from "./locationTypes";
+import { layerUrl } from "./mapLayers";
 import type { SearchResult } from "./searchTypes";
 import { getVillageEntries, type VillageEntry } from "./villageService";
 
@@ -39,7 +40,7 @@ async function buildIndex(): Promise<SearchIndex> {
 		getLocations(),
 		getLocationTagNames(),
 		getVillageEntries(),
-		fetch("./layers/districts.geojson").then((r) => r.json() as Promise<FeatureCollection>),
+		fetch(layerUrl("districts")).then((r) => r.json() as Promise<FeatureCollection>),
 		fetch("./scout-groups.json").then((r) => r.json() as Promise<Array<{ name: string; village: string }>>),
 	]);
 
