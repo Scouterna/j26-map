@@ -22,15 +22,23 @@ export function createSvgBadgeMarker(svgUrl: string, width = SVG_BADGE_WIDTH): H
 	return el;
 }
 
-export function createMarkerElement(color: string, iconUrl?: string, size = MARKER_SIZE): HTMLElement {
-	const iconOverlay = iconUrl
-		? `<div style="position:absolute;top:${ICON_INSET_TOP_PCT}%;left:50%;transform:translate(-50%,-50%);width:${ICON_CONTENT_PCT}%;aspect-ratio:1;background:white;-webkit-mask-image:url('${iconUrl}');-webkit-mask-repeat:no-repeat;-webkit-mask-size:contain;-webkit-mask-position:center;mask-image:url('${iconUrl}');mask-repeat:no-repeat;mask-size:contain;mask-position:center"></div>`
-		: "";
-
+export function createMarkerElement(color: string, size = MARKER_SIZE): HTMLElement {
 	const el = document.createElement("div");
 	el.className = "j26-marker";
 	// No position:relative here — MapLibre sets position:absolute via .maplibregl-marker
 	el.style.cssText = `width:${size}px;height:${size}px`;
-	el.innerHTML = `<div style="--pin-color:${color};width:100%;height:100%;position:relative">${pinSvg}${iconOverlay}</div>`;
+	el.innerHTML = `<div class="j26-marker-pin" style="--pin-color:${color};width:100%;height:100%;position:relative">${pinSvg}</div>`;
 	return el;
+}
+
+// Overlay the category icon as a white shape masked by the icon SVG. Applied
+// separately (and usually async) from createMarkerElement because Tabler icons
+// come from a cross-origin CDN and iOS/WebKit won't apply a cross-origin
+// mask-image — callers pass a mask-safe URL from getIconMaskUrl/toMaskSafeUrl.
+export function applyMarkerIcon(markerEl: HTMLElement, maskUrl: string): void {
+	const pin = markerEl.querySelector<HTMLElement>(".j26-marker-pin");
+	if (!pin) return;
+	const overlay = document.createElement("div");
+	overlay.style.cssText = `position:absolute;top:${ICON_INSET_TOP_PCT}%;left:50%;transform:translate(-50%,-50%);width:${ICON_CONTENT_PCT}%;aspect-ratio:1;background:white;-webkit-mask:url('${maskUrl}') no-repeat center/contain;mask:url('${maskUrl}') no-repeat center/contain`;
+	pin.appendChild(overlay);
 }

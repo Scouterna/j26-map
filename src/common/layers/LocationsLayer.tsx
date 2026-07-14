@@ -1,10 +1,15 @@
 import maplibregl from "maplibre-gl";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { getIconURL } from "../icons";
+import { getIconMaskUrl } from "../icons";
 import { getLocations } from "../locationService";
 import type { Location } from "../locationTypes";
 import { useMap } from "../MapCanvas";
-import { SVG_BADGE_WIDTH, createMarkerElement, createSvgBadgeMarker } from "../marker";
+import {
+	SVG_BADGE_WIDTH,
+	applyMarkerIcon,
+	createMarkerElement,
+	createSvgBadgeMarker,
+} from "../marker";
 
 // CSS classes in style.css control zoom-based opacity.
 // MapLibre's _updateOpacity calls `el.style.opacity = "1"` on every move event, overriding
@@ -54,10 +59,15 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 			const isBadge = !!loc.markerSvg;
 			const pinInner = isBadge
 				? createSvgBadgeMarker(loc.markerSvg!)
-				: createMarkerElement(
-					loc.category.color,
-					getIconURL(loc.category.iconName, loc.category.iconVariant),
+				: createMarkerElement(loc.category.color);
+			if (!isBadge) {
+				// Async: Tabler icons are fetched → data: URI so the mask works on iOS.
+				getIconMaskUrl(loc.category.iconName, loc.category.iconVariant).then(
+					(maskUrl) => {
+						if (maskUrl) applyMarkerIcon(pinInner, maskUrl);
+					},
 				);
+			}
 			pinInner.classList.add(PIN_CLASS);
 
 			// Transparent touch bridge fills the gap between pin tip and label.

@@ -2,10 +2,10 @@ import maplibregl from "maplibre-gl";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
-import { getIconURL } from "../common/icons";
+import { getIconURL, toMaskSafeUrl } from "../common/icons";
 import { type PointTuple, toLngLat } from "../common/locationTypes";
 import { MapCanvas, useMap } from "../common/MapCanvas";
-import { createMarkerElement } from "../common/marker";
+import { applyMarkerIcon, createMarkerElement } from "../common/marker";
 import "../style.css";
 
 type Props = {
@@ -37,8 +37,15 @@ function PreviewPin({ position, iconUrl }: Props) {
 
 	useEffect(() => {
 		if (!map) return;
-		const el = createMarkerElement("#059669", iconUrl);
+		const el = createMarkerElement("#059669");
 		el.style.pointerEvents = "none";
+		if (iconUrl) {
+			// Async: resolve to a mask-safe URL (data: URI for the cross-origin CDN)
+			// so the icon renders on iOS.
+			toMaskSafeUrl(iconUrl).then((maskUrl) => {
+				if (maskUrl) applyMarkerIcon(el, maskUrl);
+			});
+		}
 		const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
 			.setLngLat(toLngLat(position))
 			.addTo(map);
