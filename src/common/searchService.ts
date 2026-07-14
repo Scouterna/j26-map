@@ -3,8 +3,10 @@ import MiniSearch from "minisearch";
 import { getLocations } from "./locationService";
 import { getLocationTagNames } from "./locationTagService";
 import type { Location } from "./locationTypes";
+import { loadMapLabels, translateMapLabel } from "./mapLabel";
 import { layerUrl } from "./mapLayers";
 import type { SearchResult } from "./searchTypes";
+import { tolgee } from "./tolgee";
 import { getVillageEntries, type VillageEntry } from "./villageService";
 
 type SearchIndex = {
@@ -16,9 +18,14 @@ type SearchIndex = {
 function pointInPolygon(lng: number, lat: number, ring: number[][]): boolean {
 	let inside = false;
 	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-		const xi = ring[i][0], yi = ring[i][1];
-		const xj = ring[j][0], yj = ring[j][1];
-		if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+		const xi = ring[i][0],
+			yi = ring[i][1];
+		const xj = ring[j][0],
+			yj = ring[j][1];
+		if (
+			yi > lat !== yj > lat &&
+			lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi
+		) {
 			inside = !inside;
 		}
 	}
@@ -36,17 +43,37 @@ function normalize(s: string): string {
 }
 
 async function buildIndex(): Promise<SearchIndex> {
-	const [locations, tagNames, villages, districtsRaw, programRaw, scoutGroupsRaw] = await Promise.all([
+	const [
+		locations,
+		tagNames,
+		villages,
+		districtsRaw,
+		programRaw,
+		scoutGroupsRaw,
+	] = await Promise.all([
 		getLocations(),
 		getLocationTagNames(),
 		getVillageEntries(),
-		fetch(layerUrl("districts")).then((r) => r.json() as Promise<FeatureCollection>),
-		fetch(layerUrl("program")).then((r) => r.json() as Promise<FeatureCollection>),
-		fetch("./scout-groups.json").then((r) => r.json() as Promise<Array<{ name: string; village: string }>>),
+		fetch(layerUrl("districts")).then(
+			(r) => r.json() as Promise<FeatureCollection>,
+		),
+		fetch(layerUrl("program")).then(
+			(r) => r.json() as Promise<FeatureCollection>,
+		),
+		fetch("./scout-groups.json").then(
+			(r) => r.json() as Promise<Array<{ name: string; village: string }>>,
+		),
 	]);
 
+	// mapLabels.* translations must be loaded before we localize district/program
+	// names below, otherwise translateMapLabel returns the Swedish fallback.
+	await loadMapLabels();
+
 	// Build group map: tag id → { displayName, locations[] }
-	const groups = new Map<string, { displayName: string; locations: Location[] }>();
+	const groups = new Map<
+		string,
+		{ displayName: string; locations: Location[] }
+	>();
 	for (const [tag, displayName] of tagNames) {
 		groups.set(tag, { displayName, locations: [] });
 	}
@@ -56,21 +83,35 @@ async function buildIndex(): Promise<SearchIndex> {
 		}
 	}
 
-	// Districts
+	// Districts — geojson `name` is a slug; localize via Tolgee, keep the slug for
+	// indexing (normalize() strips diacritics, so the slug also matches the
+	// Swedish name typed with or without å/ä/ö).
 	const districts = (districtsRaw.features as Feature[])
 		.filter((f) => f.properties?.name)
-		.map((f) => ({ name: f.properties!.name as string, feature: f }));
+		.map((f) => {
+			const slug = f.properties!.name as string;
+			return { name: translateMapLabel("district", slug), slug, feature: f };
+		});
 
-	// Program areas
+	// Program areas — same localization as districts.
 	const programAreas = (programRaw.features as Feature[])
 		.filter((f) => f.properties?.name)
-		.map((f) => ({ name: f.properties!.name as string, feature: f }));
+		.map((f) => {
+			const slug = f.properties!.name as string;
+			return { name: translateMapLabel("program", slug), slug, feature: f };
+		});
 
 	// Scout groups — resolve each to a village entry
 	const villageByNumber = new Map(villages.map((v) => [v.villageNumber, v]));
 	const scoutGroups = scoutGroupsRaw
-		.map(({ name, village }) => ({ name, village: villageByNumber.get(village) ?? null }))
-		.filter((sg) => sg.village !== null) as Array<{ name: string; village: VillageEntry }>;
+		.map(({ name, village }) => ({
+			name,
+			village: villageByNumber.get(village) ?? null,
+		}))
+		.filter((sg) => sg.village !== null) as Array<{
+		name: string;
+		village: VillageEntry;
+	}>;
 
 	// Build MiniSearch index
 	const ms = new MiniSearch<{ id: string; name: string }>({
@@ -90,7 +131,12 @@ async function buildIndex(): Promise<SearchIndex> {
 		if (group.locations.length > 0) {
 			const id = `group-${tag}`;
 			docs.push({ id, name: group.displayName });
-			resultMap.set(id, { type: "group", tag, displayName: group.displayName, locations: group.locations });
+			resultMap.set(id, {
+				type: "group",
+				tag,
+				displayName: group.displayName,
+				locations: group.locations,
+			});
 		}
 	}
 
@@ -105,16 +151,20 @@ async function buildIndex(): Promise<SearchIndex> {
 	for (let i = 0; i < districts.length; i++) {
 		const d = districts[i];
 		const id = `district-${i}`;
-		docs.push({ id, name: d.name });
+		// Index both the localized name and the slug so either query form matches.
+		docs.push({ id, name: `${d.name} ${d.slug}` });
 		resultMap.set(id, { type: "district", name: d.name, feature: d.feature });
 	}
 
+	// Localized word for "Program" so a search in the active language surfaces the
+	// areas too (falls back to the literal "Program").
+	const programWord = tolgee.t("search.programs", "Program");
 	for (let i = 0; i < programAreas.length; i++) {
 		const p = programAreas[i];
 		const id = `program-${i}`;
-		// Prefix each with "Program" so a "Program" query surfaces all areas,
-		// while the area's own name still matches directly.
-		docs.push({ id, name: `Program ${p.name}` });
+		// Index the "Program" kicker (localized + literal) so a "Program" query
+		// surfaces all areas, plus each area's localized name and slug.
+		docs.push({ id, name: `${programWord} Program ${p.name} ${p.slug}` });
 		resultMap.set(id, { type: "program", name: p.name, feature: p.feature });
 	}
 
@@ -161,10 +211,15 @@ export function initSearch(): void {
 	getIndex();
 }
 
-export async function getGroups(): Promise<Array<{ tag: string; displayName: string }>> {
+export async function getGroups(): Promise<
+	Array<{ tag: string; displayName: string }>
+> {
 	const index = await getIndex();
 	return Array.from(index.resultMap.entries())
-		.filter((e): e is [string, Extract<SearchResult, { type: "group" }>] => e[1].type === "group")
+		.filter(
+			(e): e is [string, Extract<SearchResult, { type: "group" }>] =>
+				e[1].type === "group",
+		)
 		.map(([, r]) => ({ tag: r.tag, displayName: r.displayName }));
 }
 

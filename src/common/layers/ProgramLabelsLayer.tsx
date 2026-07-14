@@ -1,7 +1,9 @@
+import { useTranslate } from "@tolgee/react";
 import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
 import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
+import { mapLabelFallback, mapLabelKey } from "../mapLabel";
 import { layerUrl } from "../mapLayers";
 
 type ProgramFeature = {
@@ -35,7 +37,7 @@ function centroid(coords: number[][]): PointTuple {
 
 // A blue name plate matching the district labels (see AreaLabelsLayer), but with
 // a small "Program" kicker line above the area name.
-function createLabelElement(name: string): HTMLElement {
+function createLabelElement(kickerText: string, name: string): HTMLElement {
 	const el = document.createElement("div");
 	el.style.cssText = `
 		font-size: calc(18px * pow(2, (min(var(--map-zoom-anim), 17) - 16) * 0.4));
@@ -59,7 +61,7 @@ function createLabelElement(name: string): HTMLElement {
 		letter-spacing: 0.08em;
 		opacity: 0.8;
 	`;
-	kicker.textContent = "Program";
+	kicker.textContent = kickerText;
 
 	const title = document.createElement("div");
 	title.textContent = name;
@@ -71,6 +73,9 @@ function createLabelElement(name: string): HTMLElement {
 
 export function ProgramLabelsLayer() {
 	const map = useMap();
+	const { t } = useTranslate("map");
+	// `name` holds the slug from the geojson; it's resolved to a translation at
+	// render time so a language change re-runs the marker effect below.
 	const [labels, setLabels] = useState<
 		{ name: string; position: PointTuple }[]
 	>([]);
@@ -91,9 +96,13 @@ export function ProgramLabelsLayer() {
 	useEffect(() => {
 		if (!map || labels.length === 0) return;
 
+		const kicker = t("search.programs", "Program");
 		const markers = labels.map(({ name, position }) =>
 			new maplibregl.Marker({
-				element: createLabelElement(name),
+				element: createLabelElement(
+					kicker,
+					t(mapLabelKey("program", name), mapLabelFallback(name)),
+				),
 				anchor: "center",
 			})
 				.setLngLat([position[1], position[0]])
@@ -103,7 +112,7 @@ export function ProgramLabelsLayer() {
 		return () => {
 			for (const m of markers) m.remove();
 		};
-	}, [map, labels]);
+	}, [map, labels, t]);
 
 	return null;
 }

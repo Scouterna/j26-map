@@ -1,7 +1,9 @@
+import { useTranslate } from "@tolgee/react";
 import maplibregl from "maplibre-gl";
 import { useEffect, useState } from "preact/hooks";
 import type { PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
+import { mapLabelFallback, mapLabelKey } from "../mapLabel";
 import { layerUrl } from "../mapLayers";
 
 type DistrictFeature = {
@@ -58,6 +60,9 @@ function createLabelElement(name: string): HTMLElement {
 
 export function AreaLabelsLayer() {
 	const map = useMap();
+	const { t } = useTranslate("map");
+	// `name` holds the slug from the geojson; it's resolved to a translation at
+	// render time so a language change re-runs the marker effect below.
 	const [labels, setLabels] = useState<
 		{ name: string; position: PointTuple }[]
 	>([]);
@@ -81,7 +86,9 @@ export function AreaLabelsLayer() {
 		const markers = labels.map(({ name, position }) => {
 			// Inner element carries the zoom class; MapLibre's _updateOpacity sets opacity on the
 			// outer wrapper only, so the inner zoom-class opacity is not overridden.
-			const inner = createLabelElement(name);
+			const inner = createLabelElement(
+				t(mapLabelKey("district", name), mapLabelFallback(name)),
+			);
 			const outer = document.createElement("div");
 			outer.style.cssText = "display:inline-block;pointer-events:none";
 			outer.appendChild(inner);
@@ -93,7 +100,7 @@ export function AreaLabelsLayer() {
 		return () => {
 			for (const m of markers) m.remove();
 		};
-	}, [map, labels]);
+	}, [map, labels, t]);
 
 	return null;
 }
