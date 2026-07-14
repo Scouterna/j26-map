@@ -160,7 +160,9 @@ export function BottomSheet({
 				? (result.locations[0]?.category.color ?? "#6b7280")
 				: result.type === "district"
 					? (result.feature.properties?.color ?? "#6b7280")
-					: "#6b7280";
+					: result.type === "program"
+						? "#15375c"
+						: "#6b7280";
 
 	return (
 		<motion.div
@@ -252,6 +254,14 @@ export function BottomSheet({
 							{result.name}
 						</h2>
 					</>
+				)}
+				{result.type === "program" && (
+					<div class="flex-1 min-w-0">
+						<p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+							{t("search.programs", "Program")}
+						</p>
+						<h2 class="text-base font-semibold truncate">{result.name}</h2>
+					</div>
 				)}
 				{result.type === "village" && (
 					<h2 class="text-base font-semibold flex-1 min-w-0">

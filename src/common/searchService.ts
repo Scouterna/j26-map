@@ -36,11 +36,12 @@ function normalize(s: string): string {
 }
 
 async function buildIndex(): Promise<SearchIndex> {
-	const [locations, tagNames, villages, districtsRaw, scoutGroupsRaw] = await Promise.all([
+	const [locations, tagNames, villages, districtsRaw, programRaw, scoutGroupsRaw] = await Promise.all([
 		getLocations(),
 		getLocationTagNames(),
 		getVillageEntries(),
 		fetch(layerUrl("districts")).then((r) => r.json() as Promise<FeatureCollection>),
+		fetch(layerUrl("program")).then((r) => r.json() as Promise<FeatureCollection>),
 		fetch("./scout-groups.json").then((r) => r.json() as Promise<Array<{ name: string; village: string }>>),
 	]);
 
@@ -57,6 +58,11 @@ async function buildIndex(): Promise<SearchIndex> {
 
 	// Districts
 	const districts = (districtsRaw.features as Feature[])
+		.filter((f) => f.properties?.name)
+		.map((f) => ({ name: f.properties!.name as string, feature: f }));
+
+	// Program areas
+	const programAreas = (programRaw.features as Feature[])
 		.filter((f) => f.properties?.name)
 		.map((f) => ({ name: f.properties!.name as string, feature: f }));
 
@@ -101,6 +107,15 @@ async function buildIndex(): Promise<SearchIndex> {
 		const id = `district-${i}`;
 		docs.push({ id, name: d.name });
 		resultMap.set(id, { type: "district", name: d.name, feature: d.feature });
+	}
+
+	for (let i = 0; i < programAreas.length; i++) {
+		const p = programAreas[i];
+		const id = `program-${i}`;
+		// Prefix each with "Program" so a "Program" query surfaces all areas,
+		// while the area's own name still matches directly.
+		docs.push({ id, name: `Program ${p.name}` });
+		resultMap.set(id, { type: "program", name: p.name, feature: p.feature });
 	}
 
 	for (const village of villages) {

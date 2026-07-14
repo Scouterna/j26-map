@@ -19,6 +19,7 @@ function recentKey(result: SearchResult): string {
 	if (result.type === "group") return `group-${result.tag}`;
 	if (result.type === "village") return `village-${result.villageNumber}`;
 	if (result.type === "district") return `district-${result.name}`;
+	if (result.type === "program") return `program-${result.name}`;
 	if (result.type === "scout-group") return `sg-${result.groupName}`;
 	return "";
 }
@@ -129,6 +130,18 @@ function ResultRow({
 			</button>
 		);
 	}
+	if (result.type === "program") {
+		return (
+			<button
+				type="button"
+				class="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 active:bg-gray-100"
+				onClick={onClick}
+			>
+				<ResultIcon iconName="star" />
+				<span class="text-sm">{result.name}</span>
+			</button>
+		);
+	}
 	if (result.type === "scout-group") {
 		return (
 			<button
@@ -221,6 +234,7 @@ function recentLabel(
 	if (result.type === "village")
 		return t("search.village", { number: result.villageNumber });
 	if (result.type === "district") return result.name;
+	if (result.type === "program") return result.name;
 	if (result.type === "scout-group") return result.groupName;
 	return "";
 }
@@ -290,6 +304,7 @@ function resultKey(result: SearchResult): string {
 	if (result.type === "location") return `location-${result.location.id}`;
 	if (result.type === "group") return `group-${result.tag}`;
 	if (result.type === "district") return `district-${result.name}`;
+	if (result.type === "program") return `program-${result.name}`;
 	if (result.type === "village") return `village-${result.villageNumber}`;
 	if (result.type === "scout-group") return `scout-group-${result.groupName}`;
 	return "";
@@ -348,6 +363,7 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 	const locationResults = results.filter((r) => r.type === "location");
 	const villageResults = results.filter((r) => r.type === "village");
 	const districtResults = results.filter((r) => r.type === "district");
+	const programResults = results.filter((r) => r.type === "program");
 	const scoutGroupResults = results.filter((r) => r.type === "scout-group");
 
 	return (
@@ -412,6 +428,19 @@ export function ResultsPane({ searchValue, onResultClick }: Props) {
 							<SectionHeader title={t("search.districts")} />
 							<ul>
 								{districtResults.map((r) => (
+									<li key={resultKey(r)}>
+										<ResultRow result={r} onClick={() => handleClick(r)} />
+									</li>
+								))}
+							</ul>
+						</>
+					)}
+
+					{programResults.length > 0 && (
+						<>
+							<SectionHeader title={t("search.programs", "Program")} />
+							<ul>
+								{programResults.map((r) => (
 									<li key={resultKey(r)}>
 										<ResultRow result={r} onClick={() => handleClick(r)} />
 									</li>

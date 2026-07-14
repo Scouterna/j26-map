@@ -125,9 +125,12 @@ export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onR
 				const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
 				map.fitBounds([sw, ne], { padding: fitPadding, maxZoom: 18 });
 			}
-		} else if (selectedResult.type === "district") {
+		} else if (
+			selectedResult.type === "district" ||
+			selectedResult.type === "program"
+		) {
 			const bounds = featureBounds(selectedResult.feature);
-			if (bounds) map.fitBounds(bounds, { padding: fitPadding });
+			if (bounds) map.fitBounds(bounds, { padding: fitPadding, maxZoom: 18 });
 		} else if (selectedResult.type === "village") {
 			map.flyTo({
 				center: toLngLat(selectedResult.labelPoint as PointTuple),
