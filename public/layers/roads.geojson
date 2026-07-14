@@ -87,6 +87,6 @@
 { "type": "Feature", "properties": { "width": 1.0, "name": null }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1261499, 55.9767651 ], [ 14.1261192, 55.9766661 ], [ 14.126152, 55.9765984 ], [ 14.1262491, 55.9765525 ], [ 14.1263361, 55.9765228 ] ] } },
 { "type": "Feature", "properties": { "width": 0.5, "name": null }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1303729, 55.9782734 ], [ 14.1315158, 55.9783202 ] ] } },
 { "type": "Feature", "properties": { "width": 0.5, "name": null }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1310686, 55.9783019 ], [ 14.1311781, 55.9787715 ] ] } },
-{ "type": "Feature", "properties": { "width": 1.0, "name": null }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1332828, 55.9788536 ], [ 14.1338413, 55.9789043 ], [ 14.1338152, 55.9789824 ] ] } }
+{ "type": "Feature", "properties": { "width": 1.0, "name": null }, "geometry": { "type": "LineString", "coordinates": [ [ 14.1332828, 55.9788536 ], [ 14.1338413, 55.9789043 ], [ 14.1338035, 55.9790241 ] ] } }
 ]
 }

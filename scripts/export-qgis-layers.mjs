@@ -80,6 +80,9 @@ const LAYER_OVERRIDES = {
 	village_labels: {
 		villageLabels: true,
 	},
+	tents: {
+		mergeTouching: true,
+	},
 };
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -434,6 +437,46 @@ function processVillageLabels(outMnt) {
 	return notes.join("; ");
 }
 
+// Dissolve touching polygons into one shape: polygonise, close hairline CAD
+// seams with a small +/- buffer, union, then split back into one feature per
+// connected blob. Used for tents so adjacent tents read as a single polygon.
+function mergeTouchingPolys(outMnt, name) {
+	const fc = JSON.parse(readFileSync(outMnt, "utf8"));
+	const gap = 0.0002; // km (0.2m) — closes hairline seams, not real gaps
+	const polys = [];
+	let dropped = 0;
+	for (const f of fc.features) {
+		let poly;
+		try {
+			poly = f.geometry?.type === "LineString" ? turf.lineToPolygon(f) : f;
+		} catch {
+			dropped++;
+			continue;
+		}
+		const ring = poly.geometry?.coordinates?.[0];
+		if (!Array.isArray(ring) || ring.length < 4) {
+			dropped++;
+			continue;
+		}
+		polys.push(turf.buffer(poly, gap, { units: "kilometers", steps: 4 }));
+	}
+	let u =
+		polys.length === 1 ? polys[0] : turf.union(turf.featureCollection(polys));
+	u = turf.buffer(u, -gap, { units: "kilometers", steps: 4 });
+	const features = turf.flatten(u).features.map((f) => ({
+		type: "Feature",
+		properties: {},
+		geometry: f.geometry,
+	}));
+	writeFileSync(
+		outMnt,
+		JSON.stringify({ type: "FeatureCollection", name, features }),
+	);
+	const notes = [`merged ${polys.length} → ${features.length} polygon(s)`];
+	if (dropped > 0) notes.push(`${dropped} degenerate dropped`);
+	return notes.join("; ");
+}
+
 function exportLayer(layer, qgzDirMnt) {
 	const override = LAYER_OVERRIDES[layer.name] ?? {};
 	const src = parseSource(layer.source, qgzDirMnt);
@@ -480,6 +523,9 @@ function exportLayer(layer, qgzDirMnt) {
 	}
 	if (override.villageLabels) {
 		warning = processVillageLabels(outMnt);
+	}
+	if (override.mergeTouching) {
+		warning = mergeTouchingPolys(outMnt, layer.name);
 	}
 
 	return {

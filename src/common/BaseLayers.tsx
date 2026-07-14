@@ -53,12 +53,6 @@ export const BaseLayers = memo(function BaseLayers() {
 				fillColorAttribute="color"
 			/>
 			<GeoJsonLayer
-				id="districts-border"
-				src="./layers/districts.geojson"
-				style={{ weight: 4, fillOpacity: 0, opacity: 0.6 }}
-				colorAttribute="color"
-			/>
-			<GeoJsonLayer
 				id="roads-outline"
 				src="./layers/roads.geojson"
 				style={{ color: "#b3b3b3", weight: 5, opacity: 1, lineCap: "butt" }}
