@@ -1,11 +1,21 @@
 import { ScoutButton } from "@scouterna/ui-react";
+import PencilIcon from "@tabler/icons/outline/pencil.svg?raw";
 import XIcon from "@tabler/icons/outline/x.svg?raw";
 import { useTranslate } from "@tolgee/react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../common/icons";
-import { getLocationTagNames } from "../common/locationTagService";
-import type { Location, OpeningHourSlot } from "../common/locationTypes";
+import { getRawLocation, saveLocation } from "../common/locationAdminService";
+import {
+	getLocationTagNames,
+	getLocationTags,
+	type LocationTag,
+} from "../common/locationTagService";
+import type {
+	Location,
+	OpeningHourSlot,
+	RawLocation,
+} from "../common/locationTypes";
 import { getGroupsForVillage } from "../common/scoutGroupService";
 import type { SearchResult } from "../common/searchTypes";
 
@@ -16,6 +26,8 @@ type Props = {
 	onClose: () => void;
 	onLocationClick: (loc: Location) => void;
 	onHeightChange: (height: number) => void;
+	editMode?: boolean;
+	onLocationUpdated?: (raw: RawLocation) => void;
 };
 
 function SheetIcon({
@@ -104,6 +116,234 @@ function LocationBody({ location }: { location: Location }) {
 	);
 }
 
+const FIELD_CLASS =
+	"w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+const LABEL_CLASS =
+	"block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1";
+
+function LocationEditForm({
+	location,
+	onCancel,
+	onSaved,
+}: {
+	location: Location;
+	onCancel: () => void;
+	onSaved: (raw: RawLocation) => void;
+}) {
+	const { t } = useTranslate("map");
+	const raw = getRawLocation(location.id);
+
+	const [nameSv, setNameSv] = useState(raw?.name.sv ?? "");
+	const [nameEn, setNameEn] = useState(raw?.name.en ?? "");
+	const [descSv, setDescSv] = useState(raw?.description.sv ?? "");
+	const [descEn, setDescEn] = useState(raw?.description.en ?? "");
+	const [iconName, setIconName] = useState(raw?.icon_name ?? "");
+	const [iconVariant, setIconVariant] = useState<"outline" | "filled">(
+		raw?.icon_variant ?? "outline",
+	);
+	const [color, setColor] = useState(raw?.color ?? "#000000");
+	const [tags, setTags] = useState<string[]>(raw?.tags ?? []);
+
+	const [allTags, setAllTags] = useState<LocationTag[]>([]);
+	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		getLocationTags().then(setAllTags);
+	}, []);
+
+	if (!raw) {
+		return (
+			<div class="px-4 pb-4 text-sm text-red-600">
+				{t("edit.error", "Could not save changes. Please try again.")}
+			</div>
+		);
+	}
+
+	const toggleTag = (id: string) => {
+		setTags((prev) =>
+			prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
+		);
+	};
+
+	const handleSave = () => {
+		if (saving) return;
+		setSaving(true);
+		setError(null);
+		saveLocation(location.id, {
+			name: { sv: nameSv, en: nameEn },
+			description: { sv: descSv, en: descEn },
+			icon_name: iconName,
+			icon_variant: iconVariant,
+			color,
+			tags,
+		})
+			.then((updated) => {
+				setSaving(false);
+				onSaved(updated);
+			})
+			.catch(() => {
+				setSaving(false);
+				setError(t("edit.error", "Could not save changes. Please try again."));
+			});
+	};
+
+	return (
+		<div class="px-4 pb-4 max-h-[60vh] overflow-y-auto space-y-4">
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<label class={LABEL_CLASS} for="edit-name-sv">
+						{t("edit.nameSv", "Name (Swedish)")}
+					</label>
+					<input
+						id="edit-name-sv"
+						class={FIELD_CLASS}
+						value={nameSv}
+						onInput={(e) => setNameSv((e.target as HTMLInputElement).value)}
+					/>
+				</div>
+				<div>
+					<label class={LABEL_CLASS} for="edit-name-en">
+						{t("edit.nameEn", "Name (English)")}
+					</label>
+					<input
+						id="edit-name-en"
+						class={FIELD_CLASS}
+						value={nameEn}
+						onInput={(e) => setNameEn((e.target as HTMLInputElement).value)}
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label class={LABEL_CLASS} for="edit-desc-sv">
+					{t("edit.descriptionSv", "Description (Swedish)")}
+				</label>
+				<textarea
+					id="edit-desc-sv"
+					class={FIELD_CLASS}
+					rows={2}
+					value={descSv}
+					onInput={(e) => setDescSv((e.target as HTMLTextAreaElement).value)}
+				/>
+			</div>
+			<div>
+				<label class={LABEL_CLASS} for="edit-desc-en">
+					{t("edit.descriptionEn", "Description (English)")}
+				</label>
+				<textarea
+					id="edit-desc-en"
+					class={FIELD_CLASS}
+					rows={2}
+					value={descEn}
+					onInput={(e) => setDescEn((e.target as HTMLTextAreaElement).value)}
+				/>
+			</div>
+
+			<div class="flex items-end gap-3">
+				<div class="flex-1">
+					<label class={LABEL_CLASS} for="edit-icon">
+						{t("edit.icon", "Icon")}
+					</label>
+					<input
+						id="edit-icon"
+						class={FIELD_CLASS}
+						value={iconName}
+						placeholder="tabler-tent"
+						onInput={(e) => setIconName((e.target as HTMLInputElement).value)}
+					/>
+				</div>
+				<select
+					class={FIELD_CLASS}
+					style={{ width: "auto" }}
+					value={iconVariant}
+					onChange={(e) =>
+						setIconVariant(
+							(e.target as HTMLSelectElement).value as "outline" | "filled",
+						)
+					}
+				>
+					<option value="outline">{t("edit.outline", "Outline")}</option>
+					<option value="filled">{t("edit.filled", "Filled")}</option>
+				</select>
+				<div
+					class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+					style={{ backgroundColor: `${color}20` }}
+				>
+					<img
+						src={getIconURL(iconName, iconVariant)}
+						width={22}
+						height={22}
+						class="opacity-80"
+						alt=""
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label class={LABEL_CLASS} for="edit-color">
+					{t("edit.color", "Color")}
+				</label>
+				<div class="flex items-center gap-2">
+					<input
+						id="edit-color"
+						type="color"
+						class="h-9 w-12 rounded border border-gray-300 p-0.5"
+						value={color}
+						onInput={(e) => setColor((e.target as HTMLInputElement).value)}
+					/>
+					<input
+						class={FIELD_CLASS}
+						value={color}
+						onInput={(e) => setColor((e.target as HTMLInputElement).value)}
+					/>
+				</div>
+			</div>
+
+			<div>
+				<span class={LABEL_CLASS}>{t("edit.tags", "Tags")}</span>
+				<div class="flex flex-wrap gap-2">
+					{allTags.map((tag) => {
+						const selected = tags.includes(tag.id);
+						return (
+							<button
+								type="button"
+								key={tag.id}
+								onClick={() => toggleTag(tag.id)}
+								class={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+									selected
+										? "bg-blue-600 text-white border-blue-600"
+										: "bg-gray-100 text-gray-600 border-transparent"
+								}`}
+							>
+								{tag.name}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			{error && <div class="text-sm text-red-600">{error}</div>}
+
+			<div
+				class={`flex justify-end gap-2 pt-1 ${saving ? "opacity-60 pointer-events-none" : ""}`}
+			>
+				<ScoutButton
+					variant="text"
+					onClick={() => {
+						if (!saving) onCancel();
+					}}
+				>
+					{t("edit.cancel", "Cancel")}
+				</ScoutButton>
+				<ScoutButton onClick={handleSave}>
+					{saving ? t("edit.saving", "Saving…") : t("edit.save", "Save")}
+				</ScoutButton>
+			</div>
+		</div>
+	);
+}
+
 function VillageBody({ villageNumber }: { villageNumber: string }) {
 	const { t } = useTranslate("map");
 	const [groups, setGroups] = useState<string[] | null>(null);
@@ -136,11 +376,22 @@ export function BottomSheet({
 	onClose,
 	onLocationClick,
 	onHeightChange,
+	editMode = false,
+	onLocationUpdated,
 }: Props) {
 	const { t } = useTranslate("map");
 	const rootRef = useRef<HTMLDivElement>(null);
 	const y = useMotionValue(window.innerHeight);
 	const controls = useAnimation();
+	const [editing, setEditing] = useState(false);
+
+	const editingLocationId =
+		result.type === "location" ? result.location.id : null;
+	// Close the form when a different location is selected or edit mode is turned off.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on target/mode change.
+	useEffect(() => {
+		setEditing(false);
+	}, [editingLocationId, editMode]);
 
 	useEffect(() => {
 		controls.start({
@@ -173,7 +424,7 @@ export function BottomSheet({
 			drag="y"
 			dragConstraints={{ top: 0, bottom: 0 }}
 			dragElastic={{ top: 0, bottom: 0.4 }}
-			dragListener={true}
+			dragListener={!editing}
 			onDragEnd={(_, info) => {
 				if (info.offset.y > 80 || info.velocity.y > 400) {
 					onClose();
@@ -190,7 +441,9 @@ export function BottomSheet({
 			<AccentStrip color={accentColor} />
 
 			<div class="flex justify-center pt-2.5 pb-1">
-				<div class="w-10 h-1 rounded-full bg-gray-300" />
+				<div
+					class={`w-10 h-1 rounded-full bg-gray-300 ${editing ? "opacity-40" : ""}`}
+				/>
 			</div>
 
 			{/* Header */}
@@ -268,6 +521,17 @@ export function BottomSheet({
 						{t("search.village", { number: result.villageNumber })}
 					</h2>
 				)}
+				{editMode && result.type === "location" && !editing && (
+					<ScoutButton
+						variant="text"
+						icon={PencilIcon}
+						iconOnly
+						className="shrink-0"
+						onClick={() => setEditing(true)}
+					>
+						{t("edit.edit", "Edit")}
+					</ScoutButton>
+				)}
 				<ScoutButton
 					variant="text"
 					icon={XIcon}
@@ -280,9 +544,19 @@ export function BottomSheet({
 			</div>
 
 			{/* Body */}
-			{result.type === "location" && (
-				<LocationBody location={result.location} />
-			)}
+			{result.type === "location" &&
+				(editing ? (
+					<LocationEditForm
+						location={result.location}
+						onCancel={() => setEditing(false)}
+						onSaved={(raw) => {
+							onLocationUpdated?.(raw);
+							setEditing(false);
+						}}
+					/>
+				) : (
+					<LocationBody location={result.location} />
+				))}
 
 			{result.type === "village" && (
 				<VillageBody villageNumber={result.villageNumber} />

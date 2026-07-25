@@ -1,14 +1,13 @@
 import maplibregl from "maplibre-gl";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { getIconMaskUrl } from "../icons";
-import { getLocations } from "../locationService";
-import type { Location } from "../locationTypes";
+import type { Location, PointTuple } from "../locationTypes";
 import { useMap } from "../MapCanvas";
 import {
-	SVG_BADGE_WIDTH,
 	applyMarkerIcon,
 	createMarkerElement,
 	createSvgBadgeMarker,
+	SVG_BADGE_WIDTH,
 } from "../marker";
 
 // CSS classes in style.css control zoom-based opacity.
@@ -23,6 +22,9 @@ const PIN_ZOOM_THRESHOLD = 16.5;
 const MARKER_SIZE = 32;
 // Transparent touch bridge between pin tip and label, in px.
 const GAP_SIZE = 6;
+// A click firing within this window after a dragend is treated as the drag's
+// trailing click and ignored, so repositioning a pin doesn't toggle the sheet.
+const DRAG_CLICK_SUPPRESS_MS = 300;
 
 type MarkerEntry = {
 	marker: maplibregl.Marker;
@@ -32,20 +34,36 @@ type MarkerEntry = {
 };
 
 type Props = {
+	locations: Location[];
 	onLocationClick?: (loc: Location) => void;
 	visibleIds?: Set<string> | null;
 	activeId?: string | null;
 	forceVisibleIds?: Set<string> | null;
+	editMode?: boolean;
+	onLocationMove?: (id: string, position: PointTuple) => void;
 };
 
-export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = null, forceVisibleIds = null }: Props) {
+export function LocationsLayer({
+	locations,
+	onLocationClick,
+	visibleIds = null,
+	activeId = null,
+	forceVisibleIds = null,
+	editMode = false,
+	onLocationMove,
+}: Props) {
 	const map = useMap();
-	const [locations, setLocations] = useState<Location[]>([]);
 	const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
 
-	useEffect(() => {
-		getLocations().then(setLocations);
-	}, []);
+	// Latest callback, read from the (stable) dragend listener to avoid rebuilding
+	// markers when the handler identity changes.
+	const onLocationMoveRef = useRef(onLocationMove);
+	onLocationMoveRef.current = onLocationMove;
+
+	// Timestamp of the last dragend, used to suppress the click that trails a drag
+	// (see DRAG_CLICK_SUPPRESS_MS). A timestamp (vs a boolean flag) can't get stuck
+	// when a drag isn't followed by a click, e.g. on touch.
+	const lastDragEndRef = useRef(0);
 
 	useEffect(() => {
 		if (!map || locations.length === 0) return;
@@ -81,7 +99,8 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 
 			// Single container — pin/badge → gap → label all share one click target.
 			const outer = document.createElement("div");
-			outer.style.cssText = "display:flex;flex-direction:column;align-items:center";
+			outer.style.cssText =
+				"display:flex;flex-direction:column;align-items:center";
 			outer.appendChild(pinInner);
 			outer.appendChild(gap);
 			outer.appendChild(labelInner);
@@ -90,11 +109,21 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 				outer.style.cursor = "pointer";
 				outer.addEventListener("click", (e) => {
 					e.stopPropagation();
+					// Swallow the click that trails a drag so repositioning a pin
+					// doesn't also toggle the sheet.
+					if (
+						performance.now() - lastDragEndRef.current <
+						DRAG_CLICK_SUPPRESS_MS
+					) {
+						return;
+					}
 					onLocationClick(loc);
 				});
 			}
 
-			const badgeHeight = isBadge ? Math.round(SVG_BADGE_WIDTH / (loc.markerSvgAspectRatio ?? 2)) : 0;
+			const badgeHeight = isBadge
+				? Math.round(SVG_BADGE_WIDTH / (loc.markerSvgAspectRatio ?? 2))
+				: 0;
 			const marker = new maplibregl.Marker({
 				element: outer,
 				anchor: "top",
@@ -102,6 +131,13 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 			})
 				.setLngLat(lngLat)
 				.addTo(map);
+
+			marker.on("dragend", () => {
+				lastDragEndRef.current = performance.now();
+				const { lng, lat } = marker.getLngLat();
+				onLocationMoveRef.current?.(loc.id, [lat, lng]);
+			});
+
 			allMarkers.push(marker);
 
 			entries.set(loc.id, { marker, outer, pinInner, labelInner });
@@ -114,6 +150,27 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 			markersRef.current = new Map();
 		};
 	}, [map, locations, onLocationClick]);
+
+	// In edit mode every pin is draggable, and all stay fully visible regardless of
+	// zoom so any of them can be grabbed. Accidental moves are guarded downstream:
+	// a drag only stages a move and nothing persists until the user confirms.
+	useEffect(() => {
+		for (const {
+			marker,
+			pinInner,
+			labelInner,
+		} of markersRef.current.values()) {
+			marker.setDraggable(editMode);
+			marker.getElement().style.cursor = editMode ? "grab" : "";
+			if (editMode) {
+				pinInner.style.opacity = "1";
+				labelInner.style.opacity = "1";
+			} else {
+				pinInner.style.removeProperty("opacity");
+				labelInner.style.removeProperty("opacity");
+			}
+		}
+	}, [editMode, locations]);
 
 	// Highlight the active pin and keep force-visible pins visible regardless of zoom.
 	useEffect(() => {
@@ -167,7 +224,10 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 			const zoom = map.getZoom();
 			for (const [id, { outer }] of markersRef.current) {
 				const forceVisible = forceVisibleIds?.has(id) ?? false;
-				outer.style.pointerEvents = zoom >= PIN_ZOOM_THRESHOLD || forceVisible ? "auto" : "none";
+				outer.style.pointerEvents =
+					editMode || zoom >= PIN_ZOOM_THRESHOLD || forceVisible
+						? "auto"
+						: "none";
 			}
 		};
 
@@ -177,7 +237,7 @@ export function LocationsLayer({ onLocationClick, visibleIds = null, activeId = 
 		return () => {
 			map.off("zoomend", applyZoomPointerEvents);
 		};
-	}, [map, visibleIds, forceVisibleIds, locations]);
+	}, [map, visibleIds, forceVisibleIds, locations, editMode]);
 
 	return null;
 }
