@@ -33,7 +33,11 @@ type MarkerEntry = {
 	labelInner: HTMLElement;
 	isBadge: boolean;
 	labelWidth: number;
+	baseZ: number;
 };
+
+// z-index for the active pin — above every latitude-ranked base z-index.
+const ACTIVE_Z = 100000;
 
 // Collision uses each marker's screen-space footprint (pin + label box). Labels
 // are a fixed pixel size, so as you zoom out the pins draw closer together while
@@ -100,6 +104,14 @@ export function LocationsLayer({
 		const entries = new Map<string, MarkerEntry>();
 		const allMarkers: maplibregl.Marker[] = [];
 
+		// Static z-index by latitude: northernmost (top of screen) lowest, so pins
+		// further down on screen render above those further up. Relative screen
+		// order by latitude is invariant to pan/zoom, so this never needs recomputing.
+		const zRank = new Map<string, number>();
+		[...locations]
+			.sort((a, b) => b.position[0] - a.position[0])
+			.forEach((loc, i) => zRank.set(loc.id, i));
+
 		for (const loc of locations) {
 			const lngLat: [number, number] = [loc.position[1], loc.position[0]];
 
@@ -127,9 +139,11 @@ export function LocationsLayer({
 			labelInner.textContent = loc.name;
 
 			// Single container — pin/badge → gap → label all share one click target.
+			const baseZ = zRank.get(loc.id) ?? 0;
 			const outer = document.createElement("div");
 			outer.style.cssText =
 				"display:flex;flex-direction:column;align-items:center";
+			outer.style.zIndex = String(baseZ);
 			outer.appendChild(pinInner);
 			outer.appendChild(gap);
 			outer.appendChild(labelInner);
@@ -176,6 +190,7 @@ export function LocationsLayer({
 				labelInner,
 				isBadge,
 				labelWidth: measureLabelWidth(loc.name),
+				baseZ,
 			});
 		}
 
@@ -211,7 +226,7 @@ export function LocationsLayer({
 	// Highlight the active pin and keep force-visible pins visible regardless of zoom.
 	useEffect(() => {
 		const entries = markersRef.current;
-		for (const [id, { pinInner, labelInner, outer }] of entries) {
+		for (const [id, { pinInner, labelInner, outer, baseZ }] of entries) {
 			const isActive = id === activeId;
 			const forceVisible = forceVisibleIds?.has(id) ?? false;
 			if (pinInner.classList.contains("j26-badge-scale")) {
@@ -219,7 +234,8 @@ export function LocationsLayer({
 			} else {
 				pinInner.classList.toggle("j26-marker-active", isActive);
 			}
-			outer.style.zIndex = isActive ? "1" : "";
+			// Active pin above all; otherwise keep its latitude-based base z-index.
+			outer.style.zIndex = String(isActive ? ACTIVE_Z : baseZ);
 			// Inline opacity overrides the zoom-based CSS class opacity.
 			if (isActive || forceVisible) {
 				pinInner.style.opacity = "1";
