@@ -15,7 +15,7 @@ import {
 // anything set on the MapLibre marker element. We wrap content in an inner div: MapLibre owns
 // the outer wrapper (opacity always 1), our class controls the inner element's opacity.
 const PIN_CLASS = "j26-zoom-show-16-5";
-const LABEL_CLASS = "j26-zoom-show-17";
+const LABEL_CLASS = "j26-zoom-show-18";
 // Must match the threshold in j26-zoom-show-16-5 (opacity goes to 0 below this zoom).
 const PIN_ZOOM_THRESHOLD = 16.5;
 
@@ -31,7 +31,36 @@ type MarkerEntry = {
 	outer: HTMLElement;
 	pinInner: HTMLElement;
 	labelInner: HTMLElement;
+	isBadge: boolean;
+	labelWidth: number;
 };
+
+// Collision uses each marker's screen-space footprint (pin + label box). Labels
+// are a fixed pixel size, so as you zoom out the pins draw closer together while
+// the labels stay as wide — which is why labels overlap before the pins do.
+const PIN_HALF_WIDTH = 15; // ≈ half the 32px pin box
+const LABEL_HEIGHT = 16; // 11px text + vertical padding
+const BOX_PADDING = 2; // breathing room between footprints
+// Labels only render at/above this zoom (matches .j26-zoom-show-17 in style.css);
+// below it, collision considers the pin box only.
+const LABEL_ZOOM_THRESHOLD = 18;
+// At/above this zoom (the map's max) decluttering is disabled entirely — every
+// pin shows in full regardless of overlap.
+const DECLUTTER_DISABLE_ZOOM = 19;
+
+// Label text and font size never change, so a label's pixel width is constant
+// across zoom — measure once with a cached canvas (no layout reflow).
+let labelCanvasCtx: CanvasRenderingContext2D | null = null;
+function measureLabelWidth(text: string): number {
+	if (!labelCanvasCtx) {
+		labelCanvasCtx = document.createElement("canvas").getContext("2d");
+		if (labelCanvasCtx) {
+			labelCanvasCtx.font = '600 11px "Source Sans 3 Variable", sans-serif';
+		}
+	}
+	// +8 for the label's 4px horizontal padding on each side.
+	return (labelCanvasCtx?.measureText(text).width ?? text.length * 6) + 8;
+}
 
 type Props = {
 	locations: Location[];
@@ -140,7 +169,14 @@ export function LocationsLayer({
 
 			allMarkers.push(marker);
 
-			entries.set(loc.id, { marker, outer, pinInner, labelInner });
+			entries.set(loc.id, {
+				marker,
+				outer,
+				pinInner,
+				labelInner,
+				isBadge,
+				labelWidth: measureLabelWidth(loc.name),
+			});
 		}
 
 		markersRef.current = entries;
@@ -238,6 +274,94 @@ export function LocationsLayer({
 			map.off("zoomend", applyZoomPointerEvents);
 		};
 	}, [map, visibleIds, forceVisibleIds, locations, editMode]);
+
+	// Declutter: collapse crowded pins to dots. Relative screen distances between
+	// two points depend only on zoom (not pan), so we recompute as zoom changes.
+	// We listen to the continuous `zoom` event (not `zoomend`) so pins re-expand
+	// live during the zoom gesture rather than snapping only when it settles.
+	// A greedy pass keeps the first pin in each cluster full and dots the rest;
+	// the active pin sorts first so it is never the one that gets dotted.
+	useEffect(() => {
+		if (!map) return;
+
+		const applyDeclutter = () => {
+			const entries = markersRef.current;
+			if (entries.size === 0) return;
+
+			const zoom = map.getZoom();
+			const isShown = (id: string) => {
+				if (editMode) return true;
+				if (id === activeId) return true;
+				if (forceVisibleIds?.has(id)) return true;
+				if (visibleIds) return visibleIds.has(id);
+				return zoom >= PIN_ZOOM_THRESHOLD;
+			};
+
+			// Active pin first (so it stays full), then insertion order.
+			const order = activeId
+				? [activeId, ...locations.filter((l) => l.id !== activeId).map((l) => l.id)]
+				: locations.map((l) => l.id);
+
+			// Labels contribute to the footprint only when they're actually shown.
+			const labelsVisible = zoom >= LABEL_ZOOM_THRESHOLD;
+			// At max zoom, skip the collision pass so nothing collapses.
+			const declutter = zoom < DECLUTTER_DISABLE_ZOOM;
+
+			type Box = { left: number; right: number; top: number; bottom: number };
+			const kept: Box[] = [];
+			const dottedIds = new Set<string>();
+
+			for (const id of declutter ? order : []) {
+				const entry = entries.get(id);
+				// Badges are large, few, and visually distinct — leave them as-is.
+				if (!entry || entry.isBadge || !isShown(id)) continue;
+
+				const { lng, lat } = entry.marker.getLngLat();
+				const p = map.project([lng, lat]);
+
+				// Pin box sits above the location point (the tip is at p); the label
+				// box sits below it. Widen to whichever is wider.
+				const halfWidth = Math.max(
+					PIN_HALF_WIDTH,
+					labelsVisible ? entry.labelWidth / 2 : 0,
+				);
+				const box: Box = {
+					left: p.x - halfWidth - BOX_PADDING,
+					right: p.x + halfWidth + BOX_PADDING,
+					top: p.y - MARKER_SIZE - BOX_PADDING,
+					bottom:
+						p.y + (labelsVisible ? GAP_SIZE + LABEL_HEIGHT : 0) + BOX_PADDING,
+				};
+
+				const collides = kept.some(
+					(q) =>
+						box.left < q.right &&
+						box.right > q.left &&
+						box.top < q.bottom &&
+						box.bottom > q.top,
+				);
+
+				if (collides) {
+					dottedIds.add(id);
+				} else {
+					kept.push(box);
+				}
+			}
+
+			for (const [id, { pinInner, labelInner }] of entries) {
+				const dotted = dottedIds.has(id);
+				pinInner.classList.toggle("j26-dotted", dotted);
+				labelInner.classList.toggle("j26-declutter-hide", dotted);
+			}
+		};
+
+		map.on("zoom", applyDeclutter);
+		applyDeclutter();
+
+		return () => {
+			map.off("zoom", applyDeclutter);
+		};
+	}, [map, locations, visibleIds, activeId, forceVisibleIds, editMode]);
 
 	return null;
 }

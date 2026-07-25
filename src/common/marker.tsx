@@ -26,8 +26,11 @@ export function createMarkerElement(color: string, size = MARKER_SIZE): HTMLElem
 	const el = document.createElement("div");
 	el.className = "j26-marker";
 	// No position:relative here — MapLibre sets position:absolute via .maplibregl-marker
-	el.style.cssText = `width:${size}px;height:${size}px`;
-	el.innerHTML = `<div class="j26-marker-pin" style="--pin-color:${color};width:100%;height:100%;position:relative">${pinSvg}</div>`;
+	// --pin-color lives on the container so both the pin and the declutter dot inherit it.
+	el.style.cssText = `width:${size}px;height:${size}px;--pin-color:${color}`;
+	// The dot (a sibling of the pin) is shown instead of the pin when the marker
+	// is decluttered — see the .j26-dotted rules in style.css.
+	el.innerHTML = `<div class="j26-marker-pin" style="width:100%;height:100%;position:relative">${pinSvg}</div><div class="j26-marker-dot" aria-hidden="true"></div>`;
 	return el;
 }
 
