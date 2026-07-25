@@ -10,7 +10,10 @@ const pinSvg = pinRaw
 
 export const SVG_BADGE_WIDTH = 71;
 
-export function createSvgBadgeMarker(svgUrl: string, width = SVG_BADGE_WIDTH): HTMLElement {
+export function createSvgBadgeMarker(
+	svgUrl: string,
+	width = SVG_BADGE_WIDTH,
+): HTMLElement {
 	const el = document.createElement("div");
 	el.className = "j26-marker j26-badge-scale";
 	el.style.cssText = `width:${width}px;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.35))`;
@@ -22,10 +25,16 @@ export function createSvgBadgeMarker(svgUrl: string, width = SVG_BADGE_WIDTH): H
 	return el;
 }
 
-export function createMarkerElement(color: string, size = MARKER_SIZE): HTMLElement {
+export function createMarkerElement(
+	color: string,
+	size = MARKER_SIZE,
+): HTMLElement {
 	const el = document.createElement("div");
 	el.className = "j26-marker";
 	// No position:relative here — MapLibre sets position:absolute via .maplibregl-marker
+	// when this element is used as the marker element (preview/picker). In the map,
+	// it's a child of the marker element and .j26-dotify makes it the dot's containing
+	// block instead (see style.css).
 	// --pin-color lives on the container so both the pin and the declutter dot inherit it.
 	el.style.cssText = `width:${size}px;height:${size}px;--pin-color:${color}`;
 	// The dot (a sibling of the pin) is shown instead of the pin when the marker

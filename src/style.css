@@ -49,7 +49,9 @@ body {
 .j26-badge-scale {
 	/* Scales at half the speed of full geo-zoom; transform-origin keeps bottom anchored at location point */
 	/* --badge-boost is set to 1.35 via inline style when active */
-	transform: scale(calc(pow(2, (var(--map-zoom-anim) - 16.5) * 0.5) * var(--badge-boost, 1)));
+	transform: scale(
+		calc(pow(2, (var(--map-zoom-anim) - 16.5) * 0.5) * var(--badge-boost, 1))
+	);
 	transform-origin: center bottom;
 }
 
@@ -83,20 +85,61 @@ body {
 }
 
 /* Decluttering: when pins crowd together in screen space, colliding ones
-   collapse to a small dot (see the declutter logic in LocationsLayer). */
+   collapse to a small dot (see the declutter logic in LocationsLayer).
+   The dot is also what remains below the pin zoom threshold — pins fade out
+   there but their dots stay, so every location is always marked. The dot's
+   opacity is the inverse of the pin's zoom fade (j26-zoom-show-16-5), which
+   lives on .j26-marker-pin so it never fades the dot with it. */
 .j26-marker-dot {
+	/* Shrinks as you zoom out: 10px at zoom 16.5 and above, down to 6px at the
+	   min zoom of 14. The white ring thins with it so it doesn't swallow the
+	   colored core at the small end. */
+	--dot-size: clamp(
+		6px,
+		calc(10px - (16.5 - var(--map-zoom-anim)) * 1.6px),
+		10px
+	);
+	--dot-ring: clamp(
+		1.25px,
+		calc(2px - (16.5 - var(--map-zoom-anim)) * 0.3px),
+		2px
+	);
 	display: none;
 	position: absolute;
 	bottom: 0;
 	left: 50%;
-	width: 12px;
-	height: 12px;
+	width: var(--dot-size);
+	height: var(--dot-size);
 	box-sizing: border-box;
 	transform: translate(-50%, 50%);
 	border-radius: 50%;
 	background: var(--pin-color);
-	border: 2px solid white;
+	border: var(--dot-ring) solid white;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Opted into by LocationsLayer (the preview/picker pins have no dot state):
+   the dot fades in exactly as the pin fades out, so a location is never
+   unmarked — a full pin above 16.5, a dot below it. */
+/* The dot is absolutely positioned against this container (the 32px pin box,
+   whose bottom edge is the location point). Without it the dot would resolve
+   against the MapLibre marker element and land below the label instead. */
+.j26-dotify {
+	position: relative;
+}
+
+.j26-dotify .j26-marker-dot {
+	display: block;
+	opacity: clamp(0, calc((16.49 - var(--map-zoom-anim)) * 9999), 1);
+	transition: opacity 250ms;
+}
+
+/* Pins forced visible regardless of zoom (active, search hit, edit mode) show
+   the pin itself, so their dot would poke out below the tip — hide it. Ordered
+   before the .j26-dotted rule so a forced pin that still gets decluttered
+   (equal specificity, last wins) keeps its dot. */
+.j26-pin-forced .j26-marker-dot {
+	display: none;
 }
 
 .j26-dotted .j26-marker-pin {
@@ -105,6 +148,7 @@ body {
 
 .j26-dotted .j26-marker-dot {
 	display: block;
+	opacity: 1;
 }
 
 /* Labels are suppressed on decluttered (dotted) markers. */

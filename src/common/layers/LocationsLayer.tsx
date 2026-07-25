@@ -30,6 +30,10 @@ type MarkerEntry = {
 	marker: maplibregl.Marker;
 	outer: HTMLElement;
 	pinInner: HTMLElement;
+	// Element carrying the zoom fade (the pin shape, or the badge itself). Inline
+	// opacity overrides must go here, not on pinInner, or they'd also reveal/hide
+	// the declutter dot.
+	pinFade: HTMLElement;
 	labelInner: HTMLElement;
 	isBadge: boolean;
 	labelWidth: number;
@@ -128,7 +132,14 @@ export function LocationsLayer({
 					},
 				);
 			}
-			pinInner.classList.add(PIN_CLASS);
+			// The zoom fade goes on the pin shape, not the container, so the
+			// declutter dot inside it keeps its own (inverse) zoom opacity.
+			// Badges have no inner pin element, so they fade as a whole.
+			const pinFade =
+				pinInner.querySelector<HTMLElement>(".j26-marker-pin") ?? pinInner;
+			pinFade.classList.add(PIN_CLASS);
+			// Opt into the always-visible dot (see .j26-dotify in style.css).
+			if (!isBadge) pinInner.classList.add("j26-dotify");
 
 			// Transparent touch bridge fills the gap between pin tip and label.
 			const gap = document.createElement("div");
@@ -187,6 +198,7 @@ export function LocationsLayer({
 				marker,
 				outer,
 				pinInner,
+				pinFade,
 				labelInner,
 				isBadge,
 				labelWidth: measureLabelWidth(loc.name),
@@ -209,15 +221,17 @@ export function LocationsLayer({
 		for (const {
 			marker,
 			pinInner,
+			pinFade,
 			labelInner,
 		} of markersRef.current.values()) {
 			marker.setDraggable(editMode);
 			marker.getElement().style.cursor = editMode ? "grab" : "";
+			pinInner.classList.toggle("j26-pin-forced", editMode);
 			if (editMode) {
-				pinInner.style.opacity = "1";
+				pinFade.style.opacity = "1";
 				labelInner.style.opacity = "1";
 			} else {
-				pinInner.style.removeProperty("opacity");
+				pinFade.style.removeProperty("opacity");
 				labelInner.style.removeProperty("opacity");
 			}
 		}
@@ -226,7 +240,10 @@ export function LocationsLayer({
 	// Highlight the active pin and keep force-visible pins visible regardless of zoom.
 	useEffect(() => {
 		const entries = markersRef.current;
-		for (const [id, { pinInner, labelInner, outer, baseZ }] of entries) {
+		for (const [
+			id,
+			{ pinInner, pinFade, labelInner, outer, baseZ },
+		] of entries) {
 			const isActive = id === activeId;
 			const forceVisible = forceVisibleIds?.has(id) ?? false;
 			if (pinInner.classList.contains("j26-badge-scale")) {
@@ -236,12 +253,15 @@ export function LocationsLayer({
 			}
 			// Active pin above all; otherwise keep its latitude-based base z-index.
 			outer.style.zIndex = String(isActive ? ACTIVE_Z : baseZ);
-			// Inline opacity overrides the zoom-based CSS class opacity.
+			// Inline opacity overrides the zoom-based CSS class opacity; the
+			// j26-pin-forced class suppresses the dot that would otherwise show
+			// below the pin tip at low zoom.
+			pinInner.classList.toggle("j26-pin-forced", isActive || forceVisible);
 			if (isActive || forceVisible) {
-				pinInner.style.opacity = "1";
+				pinFade.style.opacity = "1";
 				labelInner.style.opacity = "1";
 			} else {
-				pinInner.style.removeProperty("opacity");
+				pinFade.style.removeProperty("opacity");
 				labelInner.style.removeProperty("opacity");
 			}
 		}
@@ -253,15 +273,17 @@ export function LocationsLayer({
 		if (entries.size === 0) return;
 
 		if (visibleIds) {
-			for (const [id, { outer, pinInner, labelInner }] of entries) {
+			for (const [id, { outer, pinInner, pinFade, labelInner }] of entries) {
 				const visible = visibleIds.has(id);
-				pinInner.style.setProperty("opacity", visible ? "1" : "0");
+				pinInner.classList.toggle("j26-pin-forced", visible);
+				pinFade.style.setProperty("opacity", visible ? "1" : "0");
 				labelInner.style.setProperty("opacity", visible ? "1" : "0");
 				outer.style.pointerEvents = visible ? "auto" : "none";
 			}
 		} else {
-			for (const { pinInner, labelInner } of entries.values()) {
-				pinInner.style.removeProperty("opacity");
+			for (const { pinInner, pinFade, labelInner } of entries.values()) {
+				pinInner.classList.remove("j26-pin-forced");
+				pinFade.style.removeProperty("opacity");
 				labelInner.style.removeProperty("opacity");
 				// pointer-events reset is handled by the zoom effect below
 			}
@@ -315,7 +337,10 @@ export function LocationsLayer({
 
 			// Active pin first (so it stays full), then insertion order.
 			const order = activeId
-				? [activeId, ...locations.filter((l) => l.id !== activeId).map((l) => l.id)]
+				? [
+						activeId,
+						...locations.filter((l) => l.id !== activeId).map((l) => l.id),
+					]
 				: locations.map((l) => l.id);
 
 			// Labels contribute to the footprint only when they're actually shown.
