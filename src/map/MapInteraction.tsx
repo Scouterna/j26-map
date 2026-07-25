@@ -127,7 +127,8 @@ export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onR
 			}
 		} else if (
 			selectedResult.type === "district" ||
-			selectedResult.type === "program"
+			selectedResult.type === "program" ||
+			selectedResult.type === "square"
 		) {
 			const bounds = featureBounds(selectedResult.feature);
 			if (bounds) map.fitBounds(bounds, { padding: fitPadding, maxZoom: 18 });

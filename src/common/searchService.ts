@@ -49,6 +49,7 @@ async function buildIndex(): Promise<SearchIndex> {
 		villages,
 		districtsRaw,
 		programRaw,
+		squaresRaw,
 		scoutGroupsRaw,
 	] = await Promise.all([
 		getLocations(),
@@ -60,6 +61,9 @@ async function buildIndex(): Promise<SearchIndex> {
 		fetch(layerUrl("program")).then(
 			(r) => r.json() as Promise<FeatureCollection>,
 		),
+		fetch(layerUrl("squares"))
+			.then((r) => r.json() as Promise<FeatureCollection>)
+			.catch(() => ({ type: "FeatureCollection", features: [] }) as FeatureCollection),
 		fetch("./scout-groups.json").then(
 			(r) => r.json() as Promise<Array<{ name: string; village: string }>>,
 		),
@@ -100,6 +104,12 @@ async function buildIndex(): Promise<SearchIndex> {
 			const slug = f.properties!.name as string;
 			return { name: translateMapLabel("program", slug), slug, feature: f };
 		});
+
+	// Town squares — the geojson `name` is the display name directly (a plain
+	// Swedish name, not a slug), so no localization is needed.
+	const squares = (squaresRaw.features as Feature[])
+		.filter((f) => f.properties?.name)
+		.map((f) => ({ name: f.properties!.name as string, feature: f }));
 
 	// Scout groups — resolve each to a village entry
 	const villageByNumber = new Map(villages.map((v) => [v.villageNumber, v]));
@@ -166,6 +176,13 @@ async function buildIndex(): Promise<SearchIndex> {
 		// surfaces all areas, plus each area's localized name and slug.
 		docs.push({ id, name: `${programWord} Program ${p.name} ${p.slug}` });
 		resultMap.set(id, { type: "program", name: p.name, feature: p.feature });
+	}
+
+	for (let i = 0; i < squares.length; i++) {
+		const s = squares[i];
+		const id = `square-${i}`;
+		docs.push({ id, name: s.name });
+		resultMap.set(id, { type: "square", name: s.name, feature: s.feature });
 	}
 
 	for (const village of villages) {

@@ -32,6 +32,12 @@ export type SearchResultProgram = {
 	feature: Feature;
 };
 
+export type SearchResultSquare = {
+	type: "square";
+	name: string;
+	feature: Feature;
+};
+
 export type SearchResultScoutGroup = {
 	type: "scout-group";
 	groupName: string;
@@ -44,4 +50,5 @@ export type SearchResult =
 	| SearchResultVillage
 	| SearchResultDistrict
 	| SearchResultProgram
+	| SearchResultSquare
 	| SearchResultScoutGroup;

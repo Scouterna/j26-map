@@ -1,6 +1,7 @@
 import { pickLocalized } from "./localized";
 import { cacheRawLocation } from "./locationAdminService";
 import type { Location, RawLocation } from "./locationTypes";
+import { layerUrl } from "./mapLayers";
 
 const BOOKING_API_BASE = "/_services/booking/api";
 const J26_LOGO_PREFIX = "j26-logo-";
@@ -65,17 +66,49 @@ function hasCoordinates(loc: RawLocation): boolean {
 	);
 }
 
+function normalizeName(name: string): string {
+	return name.trim().toLowerCase();
+}
+
+// The squares layer draws a named town-square outline over a cluster of pins.
+// One pin per square carries that same (Swedish) name and is redundant with the
+// square's own label, so it's hidden. Matched on the raw `name.sv` — the square
+// names are Swedish — so it holds regardless of the UI language.
+let squareNamesPromise: Promise<Set<string>> | null = null;
+function getSquareNames(): Promise<Set<string>> {
+	if (!squareNamesPromise) {
+		squareNamesPromise = Promise.resolve()
+			.then(() => fetch(layerUrl("squares")))
+			.then((r) => r.json() as Promise<{ features: { properties: { name?: string } }[] }>)
+			.then(
+				(geojson) =>
+					new Set(
+						geojson.features
+							.map((f) => f.properties.name)
+							.filter((n): n is string => !!n)
+							.map(normalizeName),
+					),
+			)
+			.catch(() => new Set<string>());
+	}
+	return squareNamesPromise;
+}
+
 export async function getLocations(): Promise<Location[]> {
-	const [{ locations }, logos] = await Promise.all([
+	const [{ locations }, logos, squareNames] = await Promise.all([
 		fetch(`${BOOKING_API_BASE}/locations`).then(
 			(r) => r.json() as Promise<LocationsResponse>,
 		),
 		getLogos(),
+		getSquareNames(),
 	]);
 
 	// Cache every raw location (even coordinate-less ones) so writes can build a
 	// full-replace PUT body from the authoritative bilingual source.
 	for (const loc of locations) cacheRawLocation(loc);
 
-	return locations.filter(hasCoordinates).map((loc) => toLocation(loc, logos));
+	return locations
+		.filter(hasCoordinates)
+		.filter((loc) => !squareNames.has(normalizeName(loc.name.sv)))
+		.map((loc) => toLocation(loc, logos));
 }

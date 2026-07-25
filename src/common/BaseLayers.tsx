@@ -3,6 +3,7 @@ import { AreaLabelsLayer } from "./layers/AreaLabelsLayer";
 import { GeoJsonLayer } from "./layers/GeoJsonLayer";
 import { ProgramLabelsLayer } from "./layers/ProgramLabelsLayer";
 import { RoadLabelsLayer } from "./layers/RoadLabelsLayer";
+import { SquareLabelsLayer } from "./layers/SquareLabelsLayer";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 import { layerUrl } from "./mapLayers";
 
@@ -92,6 +93,18 @@ export const BaseLayers = memo(function BaseLayers() {
 				}}
 			/>
 			<ProgramLabelsLayer />
+			<GeoJsonLayer
+				id="squares"
+				src={layerUrl("squares")}
+				style={{
+					color: "#00365f",
+					weight: 1.5,
+					opacity: 1,
+					dashArray: [2, 3],
+					lineCap: "round",
+				}}
+			/>
+			<SquareLabelsLayer />
 		</>
 	);
 });

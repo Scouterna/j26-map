@@ -39,12 +39,13 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const CONFIG = {
 	// .qgz project file (WSL-visible path, e.g. under /mnt/c/...).
-	qgz: process.env.QGIS_QGZ ?? "/mnt/c/Users/Scrip/Documents/J26/Map/Map.qgz",
+	// qgz: process.env.QGIS_QGZ ?? "/mnt/c/Users/Scrip/Documents/J26/Map/Map.qgz",
+	qgz: process.env.QGIS_QGZ ?? "/mnt/c/Users/Scrip/Documents/Jamboree26/Map/Map.qgz",
 	// QGIS group whose layers get exported.
 	group: process.env.QGIS_GROUP ?? "Version 2",
 	// Windows ogr2ogr.exe (ships with QGIS). Update the version when QGIS updates.
 	ogr2ogr:
-		process.env.OGR2OGR ?? "/mnt/c/Program Files/QGIS 3.40.14/bin/ogr2ogr.exe",
+		process.env.OGR2OGR ?? "/mnt/c/Program Files/QGIS 3.44.12/bin/ogr2ogr.exe",
 	// Where exported files land (WSL path). src/map-layers so Vite content-hashes
 	// them (cache-busting on deploy); see src/common/mapLayers.ts.
 	outDir: process.env.OUT_DIR ?? resolve(repoRoot, "src/map-layers"),
@@ -62,6 +63,10 @@ const CONFIG = {
 	// Corner radius for the program-area outlines (program.geojson) — large so the
 	// blocky CAD shapes read as very smooth, rounded blobs.
 	programRoundMeters: 12.0,
+	// Corner radius for the town-square outlines (squares.geojson) — large so the
+	// squares read as soft, pill-like blobs. Capped by shape size: the squares are
+	// only ~25-30m across, so much beyond ~10m starts erasing the smaller ones.
+	squareRoundMeters: 9.0,
 };
 
 // Per-layer tweaks the CAD/DXF source can't express on its own:
@@ -89,6 +94,11 @@ const LAYER_OVERRIDES = {
 	},
 	program: {
 		smooth: true,
+	},
+	squares: {
+		// Round the hand-drawn square corners. Keep polygon output so the outline
+		// still draws AND SquareLabelsLayer can centre the name on each ring.
+		smooth: { radiusMeters: CONFIG.squareRoundMeters, keepPolygon: true },
 	},
 };
 
@@ -487,12 +497,14 @@ function mergeTouchingPolys(outMnt, name) {
 // Round the blocky CAD outlines into very smooth blobs. Polygonise each closed
 // line, then run a close pass (dilate r, erode r → rounds concave corners) and
 // an open pass (erode r, dilate r → rounds convex corners), both with radius
-// programRoundMeters, so every corner ends up arced to that radius. The smoothed
-// polygon boundary is written back out as a LineString so it still draws as an
-// outline. Each feature is buffered on its own, so separate areas never merge.
-function smoothPolys(outMnt, name) {
+// programRoundMeters (or opts.radiusMeters), so every corner ends up arced to
+// that radius. By default the smoothed boundary is written back as a LineString
+// so it draws as an outline; pass opts.keepPolygon to keep Polygon geometry
+// (e.g. squares, whose label layer centres a name on the ring). Each feature is
+// buffered on its own, so separate areas never merge.
+function smoothPolys(outMnt, name, opts = {}) {
 	const fc = JSON.parse(readFileSync(outMnt, "utf8"));
-	const r = CONFIG.programRoundMeters / 1000; // km
+	const r = (opts.radiusMeters ?? CONFIG.programRoundMeters) / 1000; // km
 	const hasGeom = (g) => g?.geometry?.coordinates?.length;
 	const buf = (p, d) => turf.buffer(p, d, { units: "kilometers", steps: 16 });
 	const features = [];
@@ -516,12 +528,20 @@ function smoothPolys(outMnt, name) {
 			const o = c && hasGeom(c) ? buf(buf(c, -r), r) : null; // open: round convex
 			if (o && hasGeom(o)) smoothed = o;
 		} catch {}
-		for (const lf of turf.flatten(turf.polygonToLine(smoothed)).features) {
+		if (opts.keepPolygon) {
 			features.push({
 				type: "Feature",
 				properties: f.properties,
-				geometry: lf.geometry,
+				geometry: smoothed.geometry,
 			});
+		} else {
+			for (const lf of turf.flatten(turf.polygonToLine(smoothed)).features) {
+				features.push({
+					type: "Feature",
+					properties: f.properties,
+					geometry: lf.geometry,
+				});
+			}
 		}
 	}
 	writeFileSync(
@@ -584,7 +604,11 @@ function exportLayer(layer, qgzDirMnt) {
 		warning = mergeTouchingPolys(outMnt, layer.name);
 	}
 	if (override.smooth) {
-		warning = smoothPolys(outMnt, layer.name);
+		warning = smoothPolys(
+			outMnt,
+			layer.name,
+			override.smooth === true ? {} : override.smooth,
+		);
 	}
 
 	return {

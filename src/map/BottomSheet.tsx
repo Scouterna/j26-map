@@ -413,7 +413,9 @@ export function BottomSheet({
 					? (result.feature.properties?.color ?? "#6b7280")
 					: result.type === "program"
 						? "#15375c"
-						: "#6b7280";
+						: result.type === "square"
+							? "#15375c"
+							: "#6b7280";
 
 	return (
 		<motion.div
@@ -515,6 +517,17 @@ export function BottomSheet({
 						</p>
 						<h2 class="text-base font-semibold truncate">{result.name}</h2>
 					</div>
+				)}
+				{result.type === "square" && (
+					<>
+						<span
+							class="w-4 h-4 rounded-sm shrink-0 mt-0.5"
+							style={{ backgroundColor: "#15375c" }}
+						/>
+						<h2 class="text-base font-semibold flex-1 min-w-0 truncate">
+							{result.name}
+						</h2>
+					</>
 				)}
 				{result.type === "village" && (
 					<h2 class="text-base font-semibold flex-1 min-w-0">
