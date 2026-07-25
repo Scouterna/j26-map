@@ -1,5 +1,5 @@
 import { pickLocalized } from "./localized";
-import { cacheRawLocation } from "./locationAdminService";
+import { cacheRawLocation, getRawLocation } from "./locationAdminService";
 import type { Location, RawLocation } from "./locationTypes";
 import { layerUrl } from "./mapLayers";
 
@@ -70,6 +70,17 @@ function normalizeName(name: string): string {
 	return name.trim().toLowerCase();
 }
 
+/**
+ * Match a display `Location` against a Swedish name. Resolves through the raw
+ * cache so the match holds whatever language the UI is in, falling back to the
+ * displayed name if the raw entry is missing.
+ */
+export function hasSwedishName(loc: Location, swedishName: string): boolean {
+	const raw = getRawLocation(loc.id);
+	const name = raw?.name.sv ?? loc.name;
+	return normalizeName(name) === normalizeName(swedishName);
+}
+
 // The squares layer draws a named town-square outline over a cluster of pins.
 // One pin per square carries that same (Swedish) name and is redundant with the
 // square's own label, so it's hidden. Matched on the raw `name.sv` — the square
@@ -79,7 +90,12 @@ function getSquareNames(): Promise<Set<string>> {
 	if (!squareNamesPromise) {
 		squareNamesPromise = Promise.resolve()
 			.then(() => fetch(layerUrl("squares")))
-			.then((r) => r.json() as Promise<{ features: { properties: { name?: string } }[] }>)
+			.then(
+				(r) =>
+					r.json() as Promise<{
+						features: { properties: { name?: string } }[];
+					}>,
+			)
 			.then(
 				(geojson) =>
 					new Set(

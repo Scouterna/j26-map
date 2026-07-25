@@ -1,0 +1,23 @@
+{
+"type": "FeatureCollection",
+"name": "opening_sub_paths",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"xy_coordinate_resolution": 1e-07,
+"features": [
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1403622,55.9802973],[14.1395672,55.980109]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1403798,55.9810402],[14.13959,55.9808519],[14.1390504,55.9807836]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1402183,55.9818106],[14.1392271,55.981576]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1380841,55.9814161],[14.1365411,55.9813353]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1382471,55.9810542],[14.1366408,55.9809737]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1382938,55.9806869],[14.137195,55.9806452],[14.1366333,55.9805179]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1322106,55.9806058],[14.1319385,55.9801099]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1309358,55.9814292],[14.1302819,55.9808288]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1293121,55.9802772],[14.1295499,55.9806194]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1315853,55.9824086],[14.1312165,55.9818067]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.129787,55.9822106],[14.1297078,55.9818854]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1321633,55.9796529],[14.1318353,55.978962]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1329877,55.9784055],[14.1318252,55.9783404]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1296536,55.9779016],[14.1283858,55.9778489]]}},
+{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[14.1298076,55.9782797],[14.1286561,55.9782382]]}}
+]
+}

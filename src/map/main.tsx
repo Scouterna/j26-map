@@ -2,21 +2,33 @@ import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
 import ArrowLeftIcon from "@tabler/icons/outline/arrow-left.svg?raw";
 import CheckIcon from "@tabler/icons/outline/check.svg?raw";
 import PencilIcon from "@tabler/icons/outline/pencil.svg?raw";
+import RouteIcon from "@tabler/icons/outline/route.svg?raw";
 import SearchIcon from "@tabler/icons/outline/search.svg?raw";
 import { TolgeeProvider, useTranslate } from "@tolgee/react";
 import { AnimatePresence } from "motion/react";
 import { render } from "preact";
 import { memo } from "preact/compat";
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
+import { OpeningPathsLayer } from "../common/layers/OpeningPathsLayer";
 import {
 	canManageActivities,
 	getMe,
 	getRawLocation,
 	saveLocation,
 } from "../common/locationAdminService";
-import { getLocations, rawToLocation } from "../common/locationService";
+import {
+	getLocations,
+	hasSwedishName,
+	rawToLocation,
+} from "../common/locationService";
 import type {
 	Location,
 	PointTuple,
@@ -31,6 +43,10 @@ import { BottomSheet } from "./BottomSheet";
 import { MapInteraction } from "./MapInteraction";
 import { ResultsPane } from "./ResultsPane";
 
+// Swedish name of the pin that stays on the map in the opening-paths view.
+// Matched against the raw sv name, so it holds in any UI language.
+const MAIN_STAGE_NAME = "Stora Scenen";
+
 type MapViewProps = {
 	locations: Location[];
 	selectedResult: SearchResult | null;
@@ -40,6 +56,7 @@ type MapViewProps = {
 	getSheetHeight: () => number;
 	editMode: boolean;
 	onLocationMove: (id: string, position: PointTuple) => void;
+	showOpeningPaths: boolean;
 };
 
 const MapView = memo(function MapView({
@@ -51,12 +68,34 @@ const MapView = memo(function MapView({
 	getSheetHeight,
 	editMode,
 	onLocationMove,
+	showOpeningPaths,
 }: MapViewProps) {
+	// The opening-paths view is about getting everyone to the main stage, so it
+	// drops every other pin — the routes are the message, and a full pin field
+	// just competes with them.
+	const visibleLocations = useMemo(
+		() =>
+			showOpeningPaths
+				? locations.filter((loc) => hasSwedishName(loc, MAIN_STAGE_NAME))
+				: locations,
+		[locations, showOpeningPaths],
+	);
+
+	// Keep the stage pin (and its label) out of the declutter logic — with the
+	// other pins gone there is nothing for it to collide with anyway.
+	const forceVisibleIds = useMemo(() => {
+		if (showOpeningPaths) return new Set(visibleLocations.map((l) => l.id));
+		return selectedResult?.type === "group"
+			? new Set(selectedResult.locations.map((l) => l.id))
+			: null;
+	}, [showOpeningPaths, visibleLocations, selectedResult]);
+
 	return (
 		<MapCanvas class="flex-1 z-10">
 			<BaseLayers />
+			{showOpeningPaths && <OpeningPathsLayer />}
 			<LocationsLayer
-				locations={locations}
+				locations={visibleLocations}
 				onLocationClick={onLocationClick}
 				editMode={editMode}
 				onLocationMove={onLocationMove}
@@ -65,11 +104,7 @@ const MapView = memo(function MapView({
 						? selectedResult.location.id
 						: null
 				}
-				forceVisibleIds={
-					selectedResult?.type === "group"
-						? new Set(selectedResult.locations.map((l) => l.id))
-						: null
-				}
+				forceVisibleIds={forceVisibleIds}
 			/>
 			<MapInteraction
 				selectedResult={selectedResult}
@@ -92,6 +127,7 @@ function MapApp() {
 	const [locations, setLocations] = useState<Location[]>([]);
 	const [canEdit, setCanEdit] = useState(false);
 	const [editMode, setEditMode] = useState(false);
+	const [showOpeningPaths, setShowOpeningPaths] = useState(false);
 	// Unconfirmed pin drags, keyed by location id. The value is the last-saved
 	// position, used for Undo. Nothing persists until the user confirms via the
 	// move bar; multiple pins can be staged at once.
@@ -113,6 +149,11 @@ function MapApp() {
 	useAppBarTitle(t("appBar.title"));
 
 	const handleToggleEdit = useCallback(() => setEditMode((v) => !v), []);
+
+	const handleToggleOpeningPaths = useCallback(
+		() => setShowOpeningPaths((v) => !v),
+		[],
+	);
 
 	// Re-project a raw location returned by a write and merge it into local state,
 	// keeping the map markers and any open sheet in sync.
@@ -256,22 +297,34 @@ function MapApp() {
 				/>
 			</div>
 
-			{/* Edit toggle for authorized users. The parent shell's app bar doesn't
-			    support action buttons (it only renders `title`), so the control lives
-			    in-map as a floating button. Hidden while a move is being confirmed. */}
-			{canEdit && pendingMoves.size === 0 && (
+			{/* Floating map controls. The parent shell's app bar doesn't support action
+			    buttons (it only renders `title`), so these live in-map. */}
+			<div class="fixed top-16 right-3 z-30 flex flex-col gap-2">
 				<ScoutButton
-					variant={editMode ? "primary" : "outlined"}
-					icon={editMode ? CheckIcon : PencilIcon}
+					variant={showOpeningPaths ? "primary" : "outlined"}
+					icon={RouteIcon}
 					iconOnly
-					className="fixed top-16 right-3 z-30 shadow-md bg-white rounded-[14px]"
-					onClick={handleToggleEdit}
+					className="shadow-md bg-white rounded-[14px]"
+					onClick={handleToggleOpeningPaths}
 				>
-					{editMode
-						? t("edit.done", "Done editing")
-						: t("edit.toggle", "Edit locations")}
+					{t("openingPaths.toggle", "Show opening ceremony routes")}
 				</ScoutButton>
-			)}
+
+				{/* Edit toggle for authorized users. Hidden while a move is being confirmed. */}
+				{canEdit && pendingMoves.size === 0 && (
+					<ScoutButton
+						variant={editMode ? "primary" : "outlined"}
+						icon={editMode ? CheckIcon : PencilIcon}
+						iconOnly
+						className="shadow-md bg-white rounded-[14px]"
+						onClick={handleToggleEdit}
+					>
+						{editMode
+							? t("edit.done", "Done editing")
+							: t("edit.toggle", "Edit locations")}
+					</ScoutButton>
+				)}
+			</div>
 
 			{/* Confirm bar for staged pin moves — nothing persists until Save. You can
 			    drag several pins first; Save/Undo apply to all staged moves. */}
@@ -322,6 +375,7 @@ function MapApp() {
 				getSheetHeight={getSheetHeight}
 				editMode={editMode && canEdit}
 				onLocationMove={handleLocationMove}
+				showOpeningPaths={showOpeningPaths}
 			/>
 		</div>
 	);
