@@ -299,15 +299,17 @@ function MapApp() {
 
 			{/* Floating map controls. The parent shell's app bar doesn't support action
 			    buttons (it only renders `title`), so these live in-map. */}
-			<div class="fixed top-16 right-3 z-30 flex flex-col gap-2">
+			<div class="fixed top-16 right-3 z-30 flex flex-col items-end gap-2">
 				<ScoutButton
 					variant={showOpeningPaths ? "primary" : "outlined"}
 					icon={RouteIcon}
-					iconOnly
-					className="shadow-md bg-white rounded-[14px]"
+					iconPosition="before"
+					className="shadow-md bg-white rounded-[14px] j26-rainbow-button"
 					onClick={handleToggleOpeningPaths}
 				>
-					{t("openingPaths.toggle", "Show opening ceremony routes")}
+					{showOpeningPaths
+						? t("openingPaths.hide")
+						: t("openingPaths.show")}
 				</ScoutButton>
 
 				{/* Edit toggle for authorized users. Hidden while a move is being confirmed. */}

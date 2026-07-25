@@ -10,6 +10,37 @@ body {
 	color: var(--color-text-base);
 }
 
+/* Rainbow border. ScoutButton renders into the light DOM, so we can reach its
+   inner `.button`; the `scout-button` type selector is needed to outrank the
+   design system's own `scout-button .button.<variant>` rules. The gradient is
+   painted in the border box with a solid padding-box fill on top, which is the
+   only way to get a multi-color border with a border-radius. */
+scout-button.j26-rainbow-button .button {
+	border: 2px solid transparent;
+	background:
+		linear-gradient(var(--j26-rainbow-fill), var(--j26-rainbow-fill))
+			padding-box,
+		linear-gradient(
+				90deg,
+				#e2001a,
+				#f59c00,
+				#ffd500,
+				#4aa14a,
+				#0093d0,
+				#7d3f98,
+				#e2001a
+			)
+			border-box;
+}
+
+scout-button.j26-rainbow-button .button.outlined {
+	--j26-rainbow-fill: white;
+}
+
+scout-button.j26-rainbow-button .button.primary {
+	--j26-rainbow-fill: var(--color-background-brand-base);
+}
+
 /* Zoom-based marker visibility via inherited --map-zoom-anim CSS var */
 .j26-zoom-show-16 {
 	opacity: clamp(0, calc((var(--map-zoom-anim) - 15.99) * 9999), 1);
