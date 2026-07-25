@@ -15,7 +15,7 @@ import {
 // anything set on the MapLibre marker element. We wrap content in an inner div: MapLibre owns
 // the outer wrapper (opacity always 1), our class controls the inner element's opacity.
 const PIN_CLASS = "j26-zoom-show-16-5";
-const LABEL_CLASS = "j26-zoom-show-18";
+const LABEL_CLASS = "j26-zoom-show-17";
 // Must match the threshold in j26-zoom-show-16-5 (opacity goes to 0 below this zoom).
 const PIN_ZOOM_THRESHOLD = 16.5;
 
@@ -47,7 +47,7 @@ const LABEL_HEIGHT = 16; // 11px text + vertical padding
 const BOX_PADDING = 2; // breathing room between footprints
 // Labels only render at/above this zoom (matches .j26-zoom-show-17 in style.css);
 // below it, collision considers the pin box only.
-const LABEL_ZOOM_THRESHOLD = 18;
+const LABEL_ZOOM_THRESHOLD = 17;
 // At/above this zoom (the map's max) decluttering is disabled entirely — every
 // pin shows in full regardless of overlap.
 const DECLUTTER_DISABLE_ZOOM = 19;
