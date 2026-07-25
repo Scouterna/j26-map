@@ -101,7 +101,7 @@ function PreviewApp() {
 				zoom={zoom}
 				attribution={false}
 			>
-				<BaseLayers />
+				<BaseLayers labels={false} />
 				<TileLoadWatcher onLoaded={onLoaded} />
 				<PreviewPin position={[lat, lng]} iconUrl={iconUrl} />
 			</MapCanvas>

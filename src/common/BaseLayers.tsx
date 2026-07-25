@@ -7,11 +7,20 @@ import { SquareLabelsLayer } from "./layers/SquareLabelsLayer";
 import { VillageLabelsLayer } from "./layers/VillageLabelsLayer";
 import { layerUrl } from "./mapLayers";
 
-export const BaseLayers = memo(function BaseLayers() {
+type BaseLayersProps = {
+	// Label layers depend on Tolgee (AreaLabelsLayer/ProgramLabelsLayer use the
+	// useTranslate hook, which requires a TolgeeProvider). Views without a provider
+	// — e.g. the static preview — pass labels={false} to render geography only.
+	labels?: boolean;
+};
+
+export const BaseLayers = memo(function BaseLayers({
+	labels = true,
+}: BaseLayersProps) {
 	return (
 		<>
-			<AreaLabelsLayer />
-			<VillageLabelsLayer />
+			{labels && <AreaLabelsLayer />}
+			{labels && <VillageLabelsLayer />}
 			<GeoJsonLayer
 				id="outline"
 				src={layerUrl("outline")}
@@ -70,7 +79,7 @@ export const BaseLayers = memo(function BaseLayers() {
 				geoScale
 				weightAttribute="width"
 			/>
-			<RoadLabelsLayer />
+			{labels && <RoadLabelsLayer />}
 			<GeoJsonLayer
 				id="tents"
 				src={layerUrl("tents")}
@@ -92,7 +101,7 @@ export const BaseLayers = memo(function BaseLayers() {
 					lineCap: "round",
 				}}
 			/>
-			<ProgramLabelsLayer />
+			{labels && <ProgramLabelsLayer />}
 			<GeoJsonLayer
 				id="squares"
 				src={layerUrl("squares")}
@@ -104,7 +113,7 @@ export const BaseLayers = memo(function BaseLayers() {
 					lineCap: "round",
 				}}
 			/>
-			<SquareLabelsLayer />
+			{labels && <SquareLabelsLayer />}
 		</>
 	);
 });
