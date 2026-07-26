@@ -271,6 +271,25 @@ function MapApp() {
 		});
 	}, []);
 
+	// Revert a single pin's staged move. Used when opening the edit form for a pin
+	// that has an unsaved move — the form PUTs the last-saved coordinates, so the
+	// move has to go one way or the other before editing.
+	const handleDiscardMove = useCallback(
+		(id: string) => {
+			const from = pendingMoves.get(id);
+			if (!from) return;
+			setLocations((prev) =>
+				prev.map((l) => (l.id === id ? { ...l, position: from } : l)),
+			);
+			setPendingMoves((prev) => {
+				const next = new Map(prev);
+				next.delete(id);
+				return next;
+			});
+		},
+		[pendingMoves],
+	);
+
 	// Revert all staged moves to their last-saved positions and clear the move bar.
 	const handleUndoMoves = useCallback(() => {
 		setLocations((prev) =>
@@ -492,6 +511,11 @@ function MapApp() {
 						onLocationClick={handleLocationClick}
 						onHeightChange={handleSheetHeight}
 						editMode={editMode && canEdit}
+						hasPendingMove={
+							selectedResult.type === "location" &&
+							pendingMoves.has(selectedResult.location.id)
+						}
+						onDiscardMove={handleDiscardMove}
 						onLocationUpdated={applyLocationUpdate}
 						onLocationDeleted={handleLocationDeleted}
 					/>

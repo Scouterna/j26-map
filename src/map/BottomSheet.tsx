@@ -34,6 +34,11 @@ type Props = {
 	onLocationClick: (loc: Location) => void;
 	onHeightChange: (height: number) => void;
 	editMode?: boolean;
+	// True when this location has an unsaved drag staged in the move bar. The edit
+	// form writes the last-saved coordinates, so the move can't survive a save —
+	// starting an edit asks to discard it first.
+	hasPendingMove?: boolean;
+	onDiscardMove?: (id: string) => void;
 	onLocationUpdated?: (raw: RawLocation) => void;
 	onLocationDeleted?: (id: string) => void;
 };
@@ -639,6 +644,8 @@ export function BottomSheet({
 	onLocationClick,
 	onHeightChange,
 	editMode = false,
+	hasPendingMove = false,
+	onDiscardMove,
 	onLocationUpdated,
 	onLocationDeleted,
 }: Props) {
@@ -655,6 +662,22 @@ export function BottomSheet({
 	useEffect(() => {
 		setEditing(false);
 	}, [editingLocationId, editMode]);
+
+	// The edit form's save PUTs the last-saved coordinates, so an unconfirmed drag
+	// would be silently thrown away. Ask before starting the edit.
+	const handleStartEditing = () => {
+		if (hasPendingMove && result.type === "location") {
+			const discard = confirm(
+				t(
+					"edit.moveDiscardConfirm",
+					"You've got unsaved moves. Do you want to discard those moves?",
+				),
+			);
+			if (!discard) return;
+			onDiscardMove?.(result.location.id);
+		}
+		setEditing(true);
+	};
 
 	useEffect(() => {
 		controls.start({
@@ -803,7 +826,7 @@ export function BottomSheet({
 						icon={PencilIcon}
 						iconOnly
 						className="shrink-0"
-						onClick={() => setEditing(true)}
+						onClick={handleStartEditing}
 					>
 						{t("edit.edit", "Edit")}
 					</ScoutButton>
