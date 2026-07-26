@@ -119,20 +119,16 @@ scout-button.j26-rainbow-button .button.primary {
    collapse to a small dot (see the declutter logic in LocationsLayer).
    The dot is also what remains below the pin zoom threshold — pins fade out
    there but their dots stay, so every location is always marked. The dot's
-   opacity is the inverse of the pin's zoom fade (j26-zoom-show-16-5), which
+   opacity is the inverse of the pin's zoom fade (j26-zoom-show-16), which
    lives on .j26-marker-pin so it never fades the dot with it. */
 .j26-marker-dot {
-	/* Shrinks as you zoom out: 10px at zoom 16.5 and above, down to 6px at the
+	/* Shrinks as you zoom out: 10px at zoom 16 and above, down to 6px at the
 	   min zoom of 14. The white ring thins with it so it doesn't swallow the
 	   colored core at the small end. */
-	--dot-size: clamp(
-		6px,
-		calc(10px - (16.5 - var(--map-zoom-anim)) * 1.6px),
-		10px
-	);
+	--dot-size: clamp(6px, calc(10px - (16 - var(--map-zoom-anim)) * 2px), 10px);
 	--dot-ring: clamp(
 		1.25px,
-		calc(2px - (16.5 - var(--map-zoom-anim)) * 0.3px),
+		calc(2px - (16 - var(--map-zoom-anim)) * 0.375px),
 		2px
 	);
 	display: none;
@@ -151,7 +147,7 @@ scout-button.j26-rainbow-button .button.primary {
 
 /* Opted into by LocationsLayer (the preview/picker pins have no dot state):
    the dot fades in exactly as the pin fades out, so a location is never
-   unmarked — a full pin above 16.5, a dot below it. */
+   unmarked — a full pin above 16, a dot below it. */
 /* The dot is absolutely positioned against this container (the 32px pin box,
    whose bottom edge is the location point). Without it the dot would resolve
    against the MapLibre marker element and land below the label instead. */
@@ -161,7 +157,7 @@ scout-button.j26-rainbow-button .button.primary {
 
 .j26-dotify .j26-marker-dot {
 	display: block;
-	opacity: clamp(0, calc((16.49 - var(--map-zoom-anim)) * 9999), 1);
+	opacity: clamp(0, calc((15.99 - var(--map-zoom-anim)) * 9999), 1);
 	transition: opacity 250ms;
 }
 
