@@ -229,6 +229,21 @@ function MapApp() {
 		);
 	}, []);
 
+	// Drop a deleted location from the map and close its sheet. Any staged move
+	// for it is discarded too — there's nothing left to save it onto.
+	const handleLocationDeleted = useCallback((id: string) => {
+		setLocations((prev) => prev.filter((l) => l.id !== id));
+		setPendingMoves((prev) => {
+			if (!prev.has(id)) return prev;
+			const next = new Map(prev);
+			next.delete(id);
+			return next;
+		});
+		setSelectedResult((prev) =>
+			prev?.type === "location" && prev.location.id === id ? null : prev,
+		);
+	}, []);
+
 	// A drag only stages the new position (shown on the map) and adds it to the move
 	// bar; it does not persist until the user confirms. `from` is captured once (the
 	// first time a pin is staged) from the last-saved coordinates, so Undo can
@@ -478,6 +493,7 @@ function MapApp() {
 						onHeightChange={handleSheetHeight}
 						editMode={editMode && canEdit}
 						onLocationUpdated={applyLocationUpdate}
+						onLocationDeleted={handleLocationDeleted}
 					/>
 				)}
 			</AnimatePresence>

@@ -138,3 +138,26 @@ export async function saveLocation(
 	rawCache.set(id, updated);
 	return updated;
 }
+
+// Permanently delete a location (and its tag links) server-side. Resolves on the
+// API's 204; drops the cache entry so a stale record can't be resurrected by a
+// later PUT. Throws SaveLocationError on any non-2xx.
+export async function deleteLocation(id: string): Promise<void> {
+	let res: Response;
+	try {
+		res = await fetch(`${BOOKING_API_BASE}/locations/${id}`, {
+			method: "DELETE",
+			credentials: "include",
+		});
+	} catch (err) {
+		throw new SaveLocationError(
+			err instanceof Error ? err.message : "Network error",
+		);
+	}
+
+	if (!res.ok) {
+		throw new SaveLocationError(`Delete failed (${res.status})`);
+	}
+
+	rawCache.delete(id);
+}

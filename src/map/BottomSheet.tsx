@@ -3,10 +3,12 @@ import PencilIcon from "@tabler/icons/outline/pencil.svg?raw";
 import XIcon from "@tabler/icons/outline/x.svg?raw";
 import { useTranslate } from "@tolgee/react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
+import type { ComponentChildren } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../common/icons";
 import {
 	createLocation,
+	deleteLocation,
 	getRawLocation,
 	saveLocation,
 } from "../common/locationAdminService";
@@ -33,6 +35,7 @@ type Props = {
 	onHeightChange: (height: number) => void;
 	editMode?: boolean;
 	onLocationUpdated?: (raw: RawLocation) => void;
+	onLocationDeleted?: (id: string) => void;
 };
 
 function SheetIcon({
@@ -145,11 +148,15 @@ function LocationForm({
 	onCancel,
 	onSubmit,
 	onSaved,
+	footer,
 }: {
 	initial: LocationFormValues;
 	onCancel: () => void;
 	onSubmit: (values: LocationFormValues) => Promise<RawLocation>;
 	onSaved: (raw: RawLocation) => void;
+	// Rendered inside the scroll area below the Save row — the edit flow puts
+	// its delete affordance here, well away from the primary actions.
+	footer?: ComponentChildren;
 }) {
 	const { t } = useTranslate("map");
 
@@ -352,6 +359,122 @@ function LocationForm({
 					{saving ? t("edit.saving", "Saving…") : t("edit.save", "Save")}
 				</ScoutButton>
 			</div>
+
+			{footer && (
+				<div class={saving ? "opacity-60 pointer-events-none" : ""}>
+					{footer}
+				</div>
+			)}
+		</div>
+	);
+}
+
+// Deleting is irreversible and there's no undo path, so it takes two separate
+// confirmations. Each stage puts its confirm button in a different place and
+// style than the one before, so repeatedly tapping the same spot can never
+// carry you through the whole sequence by accident.
+function DeleteLocationSection({
+	location,
+	onDeleted,
+}: {
+	location: Location;
+	onDeleted: (id: string) => void;
+}) {
+	const { t } = useTranslate("map");
+	const [stage, setStage] = useState<0 | 1 | 2>(0);
+	const [deleting, setDeleting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const handleDelete = () => {
+		if (deleting) return;
+		setDeleting(true);
+		setError(null);
+		deleteLocation(location.id)
+			.then(() => {
+				setDeleting(false);
+				onDeleted(location.id);
+			})
+			.catch(() => {
+				setDeleting(false);
+				setStage(0);
+				setError(
+					t("edit.deleteError", "Could not delete the location. Try again."),
+				);
+			});
+	};
+
+	return (
+		<div class="border-t border-gray-100 pt-3 mt-1">
+			{error && <div class="text-sm text-red-600 mb-2">{error}</div>}
+
+			{stage === 0 && (
+				<button
+					type="button"
+					class="text-sm font-medium text-red-600 underline underline-offset-2"
+					onClick={() => setStage(1)}
+				>
+					{t("edit.delete", "Delete location")}
+				</button>
+			)}
+
+			{/* First confirmation: names what's being deleted. */}
+			{stage === 1 && (
+				<div class="rounded-lg border border-red-200 bg-red-50 p-3">
+					<p class="text-sm text-red-800 mb-3">
+						{t(
+							"edit.deleteConfirm1",
+							"Delete “{name}”? This cannot be undone.",
+							{
+								name: location.name,
+							},
+						)}
+					</p>
+					<div class="flex justify-end gap-2">
+						<ScoutButton variant="text" onClick={() => setStage(0)}>
+							{t("edit.cancel", "Cancel")}
+						</ScoutButton>
+						<button
+							type="button"
+							class="text-sm font-semibold text-red-700 px-3 py-2"
+							onClick={() => setStage(2)}
+						>
+							{t("edit.deleteContinue", "Continue")}
+						</button>
+					</div>
+				</div>
+			)}
+
+			{/* Second confirmation: the destructive button moves to the left and
+			    becomes the filled one, so it isn't under the previous tap. */}
+			{stage === 2 && (
+				<div class="rounded-lg border border-red-300 bg-red-50 p-3">
+					<p class="text-sm font-semibold text-red-800 mb-1">
+						{t("edit.deleteConfirm2Title", "Are you absolutely sure?")}
+					</p>
+					<p class="text-sm text-red-800 mb-3">
+						{t(
+							"edit.deleteConfirm2",
+							"The location is removed for everyone, permanently.",
+						)}
+					</p>
+					<div
+						class={`flex items-center gap-2 ${deleting ? "opacity-60 pointer-events-none" : ""}`}
+					>
+						<button
+							type="button"
+							class="text-sm font-semibold text-white bg-red-600 rounded-lg px-3 py-2"
+							onClick={handleDelete}
+						>
+							{deleting
+								? t("edit.deleting", "Deleting…")
+								: t("edit.deleteFinal", "Yes, delete permanently")}
+						</button>
+						<ScoutButton variant="text" onClick={() => setStage(0)}>
+							{t("edit.keep", "Keep location")}
+						</ScoutButton>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -360,10 +483,12 @@ function LocationEditForm({
 	location,
 	onCancel,
 	onSaved,
+	onDeleted,
 }: {
 	location: Location;
 	onCancel: () => void;
 	onSaved: (raw: RawLocation) => void;
+	onDeleted?: (id: string) => void;
 }) {
 	const { t } = useTranslate("map");
 	const raw = getRawLocation(location.id);
@@ -392,6 +517,11 @@ function LocationEditForm({
 			onCancel={onCancel}
 			onSubmit={(values) => saveLocation(location.id, values)}
 			onSaved={onSaved}
+			footer={
+				onDeleted && (
+					<DeleteLocationSection location={location} onDeleted={onDeleted} />
+				)
+			}
 		/>
 	);
 }
@@ -510,6 +640,7 @@ export function BottomSheet({
 	onHeightChange,
 	editMode = false,
 	onLocationUpdated,
+	onLocationDeleted,
 }: Props) {
 	const { t } = useTranslate("map");
 	const rootRef = useRef<HTMLDivElement>(null);
@@ -698,6 +829,13 @@ export function BottomSheet({
 							onLocationUpdated?.(raw);
 							setEditing(false);
 						}}
+						onDeleted={
+							onLocationDeleted &&
+							((id) => {
+								setEditing(false);
+								onLocationDeleted(id);
+							})
+						}
 					/>
 				) : (
 					<LocationBody location={result.location} />
