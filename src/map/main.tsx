@@ -17,6 +17,7 @@ import {
 	useState,
 } from "preact/hooks";
 import { BaseLayers } from "../common/BaseLayers";
+import { SHOW_OPENING_PATHS_BUTTON } from "../common/featureFlags";
 import { LocationsLayer } from "../common/layers/LocationsLayer";
 import { OpeningPathsLayer } from "../common/layers/OpeningPathsLayer";
 import {
@@ -413,15 +414,17 @@ function MapApp() {
 			{/* Floating map controls. The parent shell's app bar doesn't support action
 			    buttons (it only renders `title`), so these live in-map. */}
 			<div class="fixed top-16 right-3 z-30 flex flex-col items-end gap-2">
-				<ScoutButton
-					variant={showOpeningPaths ? "primary" : "outlined"}
-					icon={RouteIcon}
-					iconPosition="before"
-					className="shadow-md bg-white rounded-[14px] j26-rainbow-button"
-					onClick={handleToggleOpeningPaths}
-				>
-					{showOpeningPaths ? t("openingPaths.hide") : t("openingPaths.show")}
-				</ScoutButton>
+				{SHOW_OPENING_PATHS_BUTTON && (
+					<ScoutButton
+						variant={showOpeningPaths ? "primary" : "outlined"}
+						icon={RouteIcon}
+						iconPosition="before"
+						className="shadow-md bg-white rounded-[14px] j26-rainbow-button"
+						onClick={handleToggleOpeningPaths}
+					>
+						{showOpeningPaths ? t("openingPaths.hide") : t("openingPaths.show")}
+					</ScoutButton>
+				)}
 
 				{/* Edit toggle for authorized users. Hidden while a move is being confirmed. */}
 				{canEdit && pendingMoves.size === 0 && (
