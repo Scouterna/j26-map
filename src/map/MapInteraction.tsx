@@ -1,5 +1,5 @@
 import type { Feature } from "geojson";
-import maplibregl from "maplibre-gl";
+import type maplibregl from "maplibre-gl";
 import { useEffect, useRef } from "preact/hooks";
 import type { PointTuple } from "../common/locationTypes";
 import { toLngLat } from "../common/locationTypes";
@@ -44,19 +44,35 @@ type Props = {
 	getSheetHeight: () => number;
 	onMapClick?: () => void;
 	onResultClick?: (result: SearchResult) => void;
+	// When set, the next map click places a new location here instead of
+	// selecting whatever is under the cursor.
+	onPlacePoint?: (position: PointTuple) => void;
 };
 
-export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onResultClick }: Props) {
+export function MapInteraction({
+	selectedResult,
+	getSheetHeight,
+	onMapClick,
+	onResultClick,
+	onPlacePoint,
+}: Props) {
 	const map = useMap();
 	const highlightRef = useRef(false);
 	const onMapClickRef = useRef(onMapClick);
 	onMapClickRef.current = onMapClick;
 	const onResultClickRef = useRef(onResultClick);
 	onResultClickRef.current = onResultClick;
+	const onPlacePointRef = useRef(onPlacePoint);
+	onPlacePointRef.current = onPlacePoint;
 
 	useEffect(() => {
 		if (!map) return;
 		const handler = async (e: maplibregl.MapMouseEvent) => {
+			// Placement mode swallows the click: no village selection, no sheet close.
+			if (onPlacePointRef.current) {
+				onPlacePointRef.current([e.lngLat.lat, e.lngLat.lng]);
+				return;
+			}
 			const village = await getVillageAtPoint(e.lngLat.lng, e.lngLat.lat);
 			if (village) {
 				onResultClickRef.current?.(village);
@@ -70,7 +86,13 @@ export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onR
 
 	// Close sheet when the selected location pin pans off-screen or under the sheet.
 	useEffect(() => {
-		if (!map || !onMapClick || !selectedResult || selectedResult.type !== "location") return;
+		if (
+			!map ||
+			!onMapClick ||
+			!selectedResult ||
+			selectedResult.type !== "location"
+		)
+			return;
 		const lngLat = toLngLat(selectedResult.location.position);
 		// Pin is 32px tall, anchored at its tip. Check against its visual center (16px above tip).
 		const PIN_HALF = 20;
@@ -114,7 +136,7 @@ export function MapInteraction({ selectedResult, getSheetHeight, onMapClick, onR
 				zoom: 18,
 				offset: [0, -(sheetH / 2)] as [number, number],
 				duration: 500,
-				easing: (t) => 1 - Math.pow(1 - t, 3),
+				easing: (t) => 1 - (1 - t) ** 3,
 			});
 		} else if (selectedResult.type === "group") {
 			const positions = selectedResult.locations.map((l) => l.position);

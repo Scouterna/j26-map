@@ -2,6 +2,7 @@ import { ScoutButton, ScoutInput } from "@scouterna/ui-react";
 import ArrowLeftIcon from "@tabler/icons/outline/arrow-left.svg?raw";
 import CheckIcon from "@tabler/icons/outline/check.svg?raw";
 import PencilIcon from "@tabler/icons/outline/pencil.svg?raw";
+import PlusIcon from "@tabler/icons/outline/plus.svg?raw";
 import RouteIcon from "@tabler/icons/outline/route.svg?raw";
 import SearchIcon from "@tabler/icons/outline/search.svg?raw";
 import { TolgeeProvider, useTranslate } from "@tolgee/react";
@@ -39,13 +40,22 @@ import type { SearchResult } from "../common/searchTypes";
 import { tolgee } from "../common/tolgee";
 import { useAppBarTitle } from "../common/use-app-bar-title";
 import "../style.css";
-import { BottomSheet } from "./BottomSheet";
+import {
+	BottomSheet,
+	NEW_LOCATION_COLOR,
+	NEW_LOCATION_ICON,
+	NewLocationSheet,
+} from "./BottomSheet";
 import { MapInteraction } from "./MapInteraction";
 import { ResultsPane } from "./ResultsPane";
 
 // Swedish name of the pin that stays on the map in the opening-paths view.
 // Matched against the raw sv name, so it holds in any UI language.
 const MAIN_STAGE_NAME = "Stora Scenen";
+
+// Id of the placeholder marker shown while a new location is being filled in.
+// Never sent anywhere — it exists only so the drop point is visible on the map.
+const DRAFT_LOCATION_ID = "__draft__";
 
 type MapViewProps = {
 	locations: Location[];
@@ -57,6 +67,9 @@ type MapViewProps = {
 	editMode: boolean;
 	onLocationMove: (id: string, position: PointTuple) => void;
 	showOpeningPaths: boolean;
+	placing: boolean;
+	onPlacePoint: (position: PointTuple) => void;
+	draftPosition: PointTuple | null;
 };
 
 const MapView = memo(function MapView({
@@ -69,29 +82,50 @@ const MapView = memo(function MapView({
 	editMode,
 	onLocationMove,
 	showOpeningPaths,
+	placing,
+	onPlacePoint,
+	draftPosition,
 }: MapViewProps) {
 	// The opening-paths view is about getting everyone to the main stage, so it
 	// drops every other pin — the routes are the message, and a full pin field
 	// just competes with them.
-	const visibleLocations = useMemo(
-		() =>
-			showOpeningPaths
-				? locations.filter((loc) => hasSwedishName(loc, MAIN_STAGE_NAME))
-				: locations,
-		[locations, showOpeningPaths],
-	);
+	const visibleLocations = useMemo(() => {
+		const base = showOpeningPaths
+			? locations.filter((loc) => hasSwedishName(loc, MAIN_STAGE_NAME))
+			: locations;
+		if (!draftPosition) return base;
+		// The draft rides along as a normal marker so it can be dragged to fine-tune
+		// the drop point before the location is created.
+		const draft: Location = {
+			id: DRAFT_LOCATION_ID,
+			name: "",
+			description: "",
+			position: draftPosition,
+			category: {
+				iconName: NEW_LOCATION_ICON,
+				iconVariant: "outline",
+				color: NEW_LOCATION_COLOR,
+			},
+			tags: [],
+		};
+		return [...base, draft];
+	}, [locations, showOpeningPaths, draftPosition]);
 
 	// Keep the stage pin (and its label) out of the declutter logic — with the
 	// other pins gone there is nothing for it to collide with anyway.
 	const forceVisibleIds = useMemo(() => {
-		if (showOpeningPaths) return new Set(visibleLocations.map((l) => l.id));
-		return selectedResult?.type === "group"
-			? new Set(selectedResult.locations.map((l) => l.id))
-			: null;
-	}, [showOpeningPaths, visibleLocations, selectedResult]);
+		const ids = showOpeningPaths
+			? new Set(visibleLocations.map((l) => l.id))
+			: selectedResult?.type === "group"
+				? new Set(selectedResult.locations.map((l) => l.id))
+				: null;
+		// The draft pin must never declutter away — it's the thing being placed.
+		if (!draftPosition) return ids;
+		return new Set([...(ids ?? []), DRAFT_LOCATION_ID]);
+	}, [showOpeningPaths, visibleLocations, selectedResult, draftPosition]);
 
 	return (
-		<MapCanvas class="flex-1 z-10">
+		<MapCanvas class={`flex-1 z-10 ${placing ? "cursor-crosshair" : ""}`}>
 			<BaseLayers />
 			{showOpeningPaths && <OpeningPathsLayer />}
 			<LocationsLayer
@@ -111,6 +145,7 @@ const MapView = memo(function MapView({
 				getSheetHeight={getSheetHeight}
 				onMapClick={onMapClick}
 				onResultClick={onResultClick}
+				onPlacePoint={placing ? onPlacePoint : undefined}
 			/>
 		</MapCanvas>
 	);
@@ -134,6 +169,10 @@ function MapApp() {
 	const [pendingMoves, setPendingMoves] = useState<Map<string, PointTuple>>(
 		new Map(),
 	);
+	// Add-location flow: `placing` waits for the map tap that drops the pin,
+	// `draftPosition` then holds that point while the create form is filled in.
+	const [placing, setPlacing] = useState(false);
+	const [draftPosition, setDraftPosition] = useState<PointTuple | null>(null);
 
 	useEffect(() => {
 		getLocations().then(setLocations);
@@ -148,7 +187,28 @@ function MapApp() {
 
 	useAppBarTitle(t("appBar.title"));
 
-	const handleToggleEdit = useCallback(() => setEditMode((v) => !v), []);
+	const handleToggleEdit = useCallback(() => {
+		setEditMode((v) => !v);
+		// Leaving edit mode abandons any half-finished placement.
+		setPlacing(false);
+		setDraftPosition(null);
+	}, []);
+
+	const handleStartPlacing = useCallback(() => {
+		setSelectedResult(null);
+		setDraftPosition(null);
+		setPlacing(true);
+	}, []);
+
+	const handlePlacePoint = useCallback((position: PointTuple) => {
+		setPlacing(false);
+		setDraftPosition(position);
+	}, []);
+
+	const handleCancelDraft = useCallback(() => {
+		setPlacing(false);
+		setDraftPosition(null);
+	}, []);
 
 	const handleToggleOpeningPaths = useCallback(
 		() => setShowOpeningPaths((v) => !v),
@@ -174,6 +234,12 @@ function MapApp() {
 	// first time a pin is staged) from the last-saved coordinates, so Undo can
 	// restore them even after repeated drags of the same pin.
 	const handleLocationMove = useCallback((id: string, position: PointTuple) => {
+		// The draft pin isn't a saved location — dragging it just moves the drop
+		// point, with nothing to stage or undo.
+		if (id === DRAFT_LOCATION_ID) {
+			setDraftPosition(position);
+			return;
+		}
 		setLocations((prev) =>
 			prev.map((l) => (l.id === id ? { ...l, position } : l)),
 		);
@@ -259,8 +325,21 @@ function MapApp() {
 	}, []);
 
 	const handleLocationClick = useCallback((loc: Location) => {
+		// Tapping the draft pin keeps the create sheet open rather than opening the
+		// detail sheet for a location that doesn't exist yet.
+		if (loc.id === DRAFT_LOCATION_ID) return;
 		setSelectedResult({ type: "location", location: loc });
 		setSearchActive(false);
+	}, []);
+
+	// A created location joins the map and opens as the selected result, so it
+	// behaves exactly like any other pin right after creation.
+	const handleLocationCreated = useCallback(async (raw: RawLocation) => {
+		const created = await rawToLocation(raw);
+		setDraftPosition(null);
+		setPlacing(false);
+		setLocations((prev) => [...prev, created]);
+		setSelectedResult({ type: "location", location: created });
 	}, []);
 
 	const handleSheetClose = useCallback(() => {
@@ -307,9 +386,7 @@ function MapApp() {
 					className="shadow-md bg-white rounded-[14px] j26-rainbow-button"
 					onClick={handleToggleOpeningPaths}
 				>
-					{showOpeningPaths
-						? t("openingPaths.hide")
-						: t("openingPaths.show")}
+					{showOpeningPaths ? t("openingPaths.hide") : t("openingPaths.show")}
 				</ScoutButton>
 
 				{/* Edit toggle for authorized users. Hidden while a move is being confirmed. */}
@@ -326,7 +403,34 @@ function MapApp() {
 							: t("edit.toggle", "Edit locations")}
 					</ScoutButton>
 				)}
+
+				{/* Add a new location: arms placement, then a map tap drops the pin. */}
+				{canEdit && editMode && pendingMoves.size === 0 && (
+					<ScoutButton
+						variant={placing ? "primary" : "outlined"}
+						icon={PlusIcon}
+						iconOnly
+						className="shadow-md bg-white rounded-[14px]"
+						onClick={placing ? handleCancelDraft : handleStartPlacing}
+					>
+						{placing
+							? t("edit.addCancel", "Cancel adding location")
+							: t("edit.add", "Add location")}
+					</ScoutButton>
+				)}
 			</div>
+
+			{/* Placement prompt — mirrors the move bar's position and styling. */}
+			{placing && (
+				<div class="fixed top-16 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white rounded-full shadow-lg border border-gray-200 pl-4 pr-2 py-1.5">
+					<span class="text-sm font-medium text-gray-700">
+						{t("edit.addHint", "Tap the map to place the new location")}
+					</span>
+					<ScoutButton variant="text" onClick={handleCancelDraft}>
+						{t("edit.cancel", "Cancel")}
+					</ScoutButton>
+				</div>
+			)}
 
 			{/* Confirm bar for staged pin moves — nothing persists until Save. You can
 			    drag several pins first; Save/Undo apply to all staged moves. */}
@@ -356,7 +460,17 @@ function MapApp() {
 			</AnimatePresence>
 
 			<AnimatePresence>
-				{selectedResult && (
+				{draftPosition && (
+					<NewLocationSheet
+						position={draftPosition}
+						onCancel={handleCancelDraft}
+						onCreated={handleLocationCreated}
+					/>
+				)}
+			</AnimatePresence>
+
+			<AnimatePresence>
+				{selectedResult && !draftPosition && (
 					<BottomSheet
 						result={selectedResult}
 						onClose={handleSheetClose}
@@ -378,6 +492,9 @@ function MapApp() {
 				editMode={editMode && canEdit}
 				onLocationMove={handleLocationMove}
 				showOpeningPaths={showOpeningPaths}
+				placing={placing}
+				onPlacePoint={handlePlacePoint}
+				draftPosition={draftPosition}
 			/>
 		</div>
 	);

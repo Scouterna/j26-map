@@ -1,4 +1,6 @@
-import type { RawLocation } from "./locationTypes";
+import type { IconVariant } from "./icons";
+import type { LocalizedText } from "./localized";
+import type { OpeningHourSlot, RawLocation } from "./locationTypes";
 
 const BOOKING_API_BASE = "/_services/booking/api";
 
@@ -45,6 +47,49 @@ export function getRawLocation(id: string): RawLocation | undefined {
 }
 
 export class SaveLocationError extends Error {}
+
+// The writable fields of a location, as accepted by the booking API's
+// LocationInput schema. Coordinates are all-or-nothing server-side: send both
+// or neither, never one.
+export type LocationInput = {
+	name: LocalizedText;
+	description: LocalizedText;
+	icon_name: string;
+	icon_variant: IconVariant;
+	color: string;
+	latitude: number | null;
+	longitude: number | null;
+	opening_hours: Record<string, OpeningHourSlot[]>;
+	tags: string[];
+};
+
+// POST a brand-new location and cache the created record so subsequent edits
+// (which PUT a full replace built from the cache) work without a refetch.
+export async function createLocation(
+	input: LocationInput,
+): Promise<RawLocation> {
+	let res: Response;
+	try {
+		res = await fetch(`${BOOKING_API_BASE}/locations`, {
+			method: "POST",
+			credentials: "include",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(input),
+		});
+	} catch (err) {
+		throw new SaveLocationError(
+			err instanceof Error ? err.message : "Network error",
+		);
+	}
+
+	if (!res.ok) {
+		throw new SaveLocationError(`Create failed (${res.status})`);
+	}
+
+	const created = (await res.json()) as RawLocation;
+	rawCache.set(created.id, created);
+	return created;
+}
 
 // Merge `patch` over the cached raw location and PUT the full record. Returns the
 // server's fresh raw location and refreshes the cache. Throws SaveLocationError on

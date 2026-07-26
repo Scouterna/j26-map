@@ -5,7 +5,11 @@ import { useTranslate } from "@tolgee/react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { getIconURL } from "../common/icons";
-import { getRawLocation, saveLocation } from "../common/locationAdminService";
+import {
+	createLocation,
+	getRawLocation,
+	saveLocation,
+} from "../common/locationAdminService";
 import {
 	getLocationTagNames,
 	getLocationTags,
@@ -14,6 +18,7 @@ import {
 import type {
 	Location,
 	OpeningHourSlot,
+	PointTuple,
 	RawLocation,
 } from "../common/locationTypes";
 import { getGroupsForVillage } from "../common/scoutGroupService";
@@ -121,28 +126,43 @@ const FIELD_CLASS =
 const LABEL_CLASS =
 	"block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1";
 
-function LocationEditForm({
-	location,
+// The fields the map's location form edits. `opening_hours` is deliberately
+// absent — the map never touches it (writes preserve it via the raw cache).
+type LocationFormValues = {
+	name: { sv: string; en: string };
+	description: { sv: string; en: string };
+	icon_name: string;
+	icon_variant: "outline" | "filled";
+	color: string;
+	tags: string[];
+};
+
+// Shared by the edit and create flows: identical fields, different submit.
+// `onSubmit` performs the write (PUT or POST) and resolves with the server's
+// raw location, which the caller merges into app state.
+function LocationForm({
+	initial,
 	onCancel,
+	onSubmit,
 	onSaved,
 }: {
-	location: Location;
+	initial: LocationFormValues;
 	onCancel: () => void;
+	onSubmit: (values: LocationFormValues) => Promise<RawLocation>;
 	onSaved: (raw: RawLocation) => void;
 }) {
 	const { t } = useTranslate("map");
-	const raw = getRawLocation(location.id);
 
-	const [nameSv, setNameSv] = useState(raw?.name.sv ?? "");
-	const [nameEn, setNameEn] = useState(raw?.name.en ?? "");
-	const [descSv, setDescSv] = useState(raw?.description.sv ?? "");
-	const [descEn, setDescEn] = useState(raw?.description.en ?? "");
-	const [iconName, setIconName] = useState(raw?.icon_name ?? "");
+	const [nameSv, setNameSv] = useState(initial.name.sv);
+	const [nameEn, setNameEn] = useState(initial.name.en);
+	const [descSv, setDescSv] = useState(initial.description.sv);
+	const [descEn, setDescEn] = useState(initial.description.en);
+	const [iconName, setIconName] = useState(initial.icon_name);
 	const [iconVariant, setIconVariant] = useState<"outline" | "filled">(
-		raw?.icon_variant ?? "outline",
+		initial.icon_variant,
 	);
-	const [color, setColor] = useState(raw?.color ?? "#000000");
-	const [tags, setTags] = useState<string[]>(raw?.tags ?? []);
+	const [color, setColor] = useState(initial.color);
+	const [tags, setTags] = useState<string[]>(initial.tags);
 
 	const [allTags, setAllTags] = useState<LocationTag[]>([]);
 	const [saving, setSaving] = useState(false);
@@ -151,14 +171,6 @@ function LocationEditForm({
 	useEffect(() => {
 		getLocationTags().then(setAllTags);
 	}, []);
-
-	if (!raw) {
-		return (
-			<div class="px-4 pb-4 text-sm text-red-600">
-				{t("edit.error", "Could not save changes. Please try again.")}
-			</div>
-		);
-	}
 
 	const toggleTag = (id: string) => {
 		setTags((prev) =>
@@ -170,7 +182,7 @@ function LocationEditForm({
 		if (saving) return;
 		setSaving(true);
 		setError(null);
-		saveLocation(location.id, {
+		onSubmit({
 			name: { sv: nameSv, en: nameEn },
 			description: { sv: descSv, en: descEn },
 			icon_name: iconName,
@@ -341,6 +353,126 @@ function LocationEditForm({
 				</ScoutButton>
 			</div>
 		</div>
+	);
+}
+
+function LocationEditForm({
+	location,
+	onCancel,
+	onSaved,
+}: {
+	location: Location;
+	onCancel: () => void;
+	onSaved: (raw: RawLocation) => void;
+}) {
+	const { t } = useTranslate("map");
+	const raw = getRawLocation(location.id);
+
+	if (!raw) {
+		return (
+			<div class="px-4 pb-4 text-sm text-red-600">
+				{t("edit.error", "Could not save changes. Please try again.")}
+			</div>
+		);
+	}
+
+	return (
+		<LocationForm
+			initial={{
+				name: { sv: raw.name.sv ?? "", en: raw.name.en ?? "" },
+				description: {
+					sv: raw.description.sv ?? "",
+					en: raw.description.en ?? "",
+				},
+				icon_name: raw.icon_name,
+				icon_variant: raw.icon_variant,
+				color: raw.color,
+				tags: raw.tags ?? [],
+			}}
+			onCancel={onCancel}
+			onSubmit={(values) => saveLocation(location.id, values)}
+			onSaved={onSaved}
+		/>
+	);
+}
+
+// Defaults for a freshly placed pin, so it renders as a real marker the moment
+// it's dropped and is savable without touching the icon/color fields.
+export const NEW_LOCATION_ICON = "tabler-map-pin";
+export const NEW_LOCATION_COLOR = "#15375c";
+
+// Sheet for a location being created at `position` (dropped by tapping the map
+// in edit mode). Unlike the edit sheet this isn't draggable — a stray downward
+// swipe while filling in a form shouldn't discard the draft; Cancel does that.
+export function NewLocationSheet({
+	position,
+	onCancel,
+	onCreated,
+}: {
+	position: PointTuple;
+	onCancel: () => void;
+	onCreated: (raw: RawLocation) => void;
+}) {
+	const { t } = useTranslate("map");
+
+	return (
+		<motion.div
+			key="new-location-sheet"
+			class="fixed bottom-0 left-0 right-0 z-20 bg-white rounded-t-2xl shadow-2xl"
+			initial={{ y: "100%" }}
+			animate={{ y: 0 }}
+			exit={{ y: "100%", transition: { duration: 0.2 } }}
+			transition={{ type: "spring", stiffness: 400, damping: 40 }}
+		>
+			<AccentStrip color={NEW_LOCATION_COLOR} />
+
+			<div class="flex items-center gap-3 px-4 py-3">
+				<div class="flex-1 min-w-0">
+					<p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+						{t("edit.newLocation", "New location")}
+					</p>
+					<p class="text-sm text-gray-500">
+						{position[0].toFixed(5)}, {position[1].toFixed(5)}
+					</p>
+				</div>
+				<ScoutButton
+					variant="text"
+					icon={XIcon}
+					iconOnly
+					className="-mr-1 shrink-0"
+					onClick={onCancel}
+				>
+					{t("bottomSheet.close")}
+				</ScoutButton>
+			</div>
+
+			<LocationForm
+				initial={{
+					name: { sv: "", en: "" },
+					description: { sv: "", en: "" },
+					icon_name: NEW_LOCATION_ICON,
+					icon_variant: "outline",
+					color: NEW_LOCATION_COLOR,
+					tags: [],
+				}}
+				onCancel={onCancel}
+				onSubmit={(values) =>
+					createLocation({
+						...values,
+						latitude: position[0],
+						longitude: position[1],
+						opening_hours: {},
+					})
+				}
+				onSaved={onCreated}
+			/>
+
+			<div class="pb-safe" />
+			<div
+				class="absolute left-0 right-0 h-screen bg-white"
+				style={{ top: "calc(100% - 1px)" }}
+			/>
+		</motion.div>
 	);
 }
 
